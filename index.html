@@ -1,921 +1,778 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEXcode Pseudocode Converter & Hardware Gatekeeper</title>
-    <!-- Dynamic Walton + Python Mashup Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 98,50 50,98 2,50' fill='%23BA0C2F'/><polygon points='50,8 92,50 50,92 8,50' fill='%23FFFFFF'/><polygon points='50,14 86,50 50,86 14,50' fill='%23002D62'/><path d='M47 30 A7 7 0 0 1 54 37 L54 44 L42 44 A4 4 0 0 0 38 48 L38 52 L34 52 A7 7 0 0 1 27 45 L27 37 A7 7 0 0 1 34 30 Z' fill='%23387eb8'/><circle cx='34' cy='35' r='1.5' fill='%23ffffff'/><path d='M53 70 A7 7 0 0 1 46 63 L46 56 L58 56 A4 4 0 0 0 62 52 L62 48 L66 48 A7 7 0 0 1 73 55 L73 63 A7 7 0 0 1 66 70 Z' fill='%23ffe052'/><circle cx='66' cy='65' r='1.5' fill='%23387eb8'/><polygon points='44,38 48,58 52,58 56,38 52,38 50,50 48,38' fill='%23FFFFFF'/></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        walton: {
-                            navy: '#002D62',
-                            crimson: '#BA0C2F',
-                            lightNavy: '#0c3d7a',
-                            darkNavy: '#001a38',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* Custom scrollbars for code and terminal displays */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        .code-font {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
-        
-        .pulse-subtle {
-            animation: pulseSubtle 2.5s infinite;
-        }
-        @keyframes pulseSubtle {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.65; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEXcode Pseudocode Hardware Gatekeeper</title>
+  
+  <!-- Favicon referencing your uploaded SVG -->
+  <link rel="icon" type="image/svg+xml" href="./vexconverter.svg">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b1120;
+    }
+    
+    code, pre {
+      font-family: 'Fira Code', monospace;
+    }
+    
+    .walton-navy { background-color: #082A72; }
+    .walton-crimson { background-color: #BA0C1E; }
+    .text-walton-red { color: #E5132B; }
+    .border-walton-navy { border-color: #082A72; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+<body class="text-slate-200 min-h-screen flex flex-col antialiased selection:bg-red-600 selection:text-white">
 
-    <!-- Top Navigation & Branding Bar -->
-    <nav class="bg-walton-navy border-b-4 border-walton-crimson text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-            
-            <div class="flex items-center space-x-3.5">
-                <!-- Walton + Python Mashup Badge -->
-                <div class="relative w-12 h-12 flex-shrink-0 flex items-center justify-center filter drop-shadow">
-                    <svg class="w-full h-full" viewBox="0 0 100 100">
-                        <!-- Outer Crimson Walton Diamond -->
-                        <polygon points="50,2 98,50 50,98 2,50" fill="#BA0C2F" />
-                        <!-- White Accent Outline -->
-                        <polygon points="50,7 93,50 50,93 7,50" fill="#FFFFFF" />
-                        <!-- Navy Inner Diamond -->
-                        <polygon points="50,13 87,50 50,87 13,50" fill="#002D62" />
-                        <!-- Python Blue Upper Snake Form -->
-                        <path d="M47 28 A7 7 0 0 1 54 35 L54 43 L42 43 A4 4 0 0 0 38 47 L38 52 L34 52 A7 7 0 0 1 27 45 L27 35 A7 7 0 0 1 34 28 Z" fill="#387eb8"/>
-                        <circle cx="34" cy="33" r="1.6" fill="#ffffff"/>
-                        <!-- Python Yellow Lower Snake Form -->
-                        <path d="M53 72 A7 7 0 0 1 46 65 L46 57 L58 57 A4 4 0 0 0 62 53 L62 48 L66 48 A7 7 0 0 1 73 55 L73 65 A7 7 0 0 1 66 72 Z" fill="#ffe052"/>
-                        <circle cx="66" cy="67" r="1.6" fill="#387eb8"/>
-                        <!-- Central Letter W -->
-                        <text x="50" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="24" fill="#FFFFFF" text-anchor="middle">W</text>
-                    </svg>
-                </div>
-                <!-- Title & Department Info -->
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">VEXcode Pseudocode Converter</h1>
-                        <span class="bg-walton-crimson text-white text-xs uppercase px-2 py-0.5 rounded font-bold tracking-wider">Gatekeeper</span>
-                    </div>
-                    <p class="text-xs sm:text-sm text-slate-300">Walton Engineering & Robotics &bull; VEXcode V5 Python Pipeline</p>
-                </div>
-            </div>
-
-            <!-- API Key & Quick Action Help -->
-            <div class="flex items-center space-x-2 w-full md:w-auto">
-                <button id="open-api-modal-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center transition shadow-sm">
-                    <svg class="w-4 h-4 mr-1.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                    </svg>
-                    API Key Settings
-                    <span id="key-indicator" class="ml-2 w-2 h-2 rounded-full bg-red-500 inline-block" title="Key Missing"></span>
-                </button>
-            </div>
+  <!-- ================= TOP NAVIGATION / HEADER ================= -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <!-- SVG Badge with inline fallback in case file is loading -->
+        <div class="w-12 h-12 flex-shrink-0 rounded-lg p-0.5 flex items-center justify-center">
+          <img src="./vexconverter.svg" 
+               alt="Walton Python Badge" 
+               class="w-full h-full object-contain"
+               onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-10 h-10 rounded bg-[#082A72] border border-[#BA0C1E] flex items-center justify-center font-bold text-white text-lg\'>W</div>';">
         </div>
-    </nav>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white leading-tight">VEXcode Hardware Gatekeeper</h1>
+            <span class="text-xs bg-red-950/80 border border-red-700/60 text-red-300 font-semibold px-2 py-0.5 rounded-full">V5 Strict</span>
+          </div>
+          <p class="text-xs text-slate-400">Autonomous Pseudocode &rarr; VEXcode V5 Python Validation Engine</p>
+        </div>
+      </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow flex flex-col">
+      <!-- Action Utilities -->
+      <div class="flex items-center gap-2">
+        <button id="apiKeyBtn" 
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <span id="apiKeyBtnLabel">API Key</span>
+          <span id="apiKeyStatusDot" class="w-2 h-2 rounded-full bg-red-500"></span>
+        </button>
+
+        <button id="helpModalBtn" 
+                title="Hardware & Gatekeeper Criteria"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-sm font-bold">
+          ?
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN APP CONTAINER ================= -->
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- LEFT PANEL: Upload & Gatekeeper Rules (5 Columns) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Gatekeeper Description Banner -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex items-start gap-3">
+          <div class="p-2.5 rounded-xl bg-blue-950/70 border border-blue-700/50 text-blue-400 flex-shrink-0 mt-0.5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white tracking-wide uppercase">Hardware Gatekeeper Criteria</h2>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              This engine does not award grades. It enforces physical robotics constraints:
+            </p>
+            <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
+              <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit port or pin designation are immediately rejected.</li>
+              <li><strong class="text-amber-400">Literal Logic Execution:</strong> If a motor is commanded to start but never stopped, it will spin indefinitely in the generated code.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Dropzone Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Pseudocode Document (Image or PDF)</label>
         
-        <!-- Hardware Validation Rules Banner (Strictly Non-Grading) -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-start space-x-3">
-                    <div class="p-2.5 bg-blue-50 text-walton-navy rounded-lg mt-0.5">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-base font-bold text-slate-800">Hardware Validation & Python Code Converter</h2>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-0.5 leading-relaxed">
-                            Upload your handwritten or typed pseudocode. If peripheral pin/port declarations are missing, 
-                            <strong class="text-walton-crimson">conversion is rejected immediately</strong>. 
-                            When accepted, your pseudocode is directly converted into executable VEXcode V5 Python code—<span class="font-semibold text-slate-800">preserving your exact logic (even runaway motors!)</span> so you can test it directly on your robot.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Fast Verification Tags -->
-                <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
-                    <div class="flex items-center text-xs text-slate-700 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
-                        <span class="text-red-600 font-bold mr-1.5">&times;</span> Missing Ports = Rejection
-                    </div>
-                    <div class="flex items-center text-xs text-slate-700 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
-                        <span class="text-emerald-600 font-bold mr-1.5">&check;</span> Literal Logic Preserved
-                    </div>
-                </div>
+        <div id="dropzone" 
+             class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 flex flex-col items-center justify-center min-h-[220px]">
+          
+          <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
+          
+          <div id="dropzonePrompt" class="space-y-3 flex flex-col items-center">
+            <div class="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
             </div>
+            <div>
+              <p class="text-sm font-medium text-slate-200">Click to upload or drag & drop</p>
+              <p class="text-xs text-slate-500 mt-1">Camera photos, JPG, PNG, or PDF</p>
+            </div>
+            <span class="inline-block text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono">Max size scaled automatically</span>
+          </div>
+
+          <!-- Preview Container -->
+          <div id="previewContainer" class="hidden w-full space-y-3">
+            <div class="relative w-full max-h-60 rounded-lg overflow-hidden bg-black/40 border border-slate-700">
+              <img id="imagePreview" src="" alt="Pseudocode preview" class="w-full h-full object-contain max-h-56">
+            </div>
+            <div class="flex items-center justify-between text-xs px-1">
+              <span id="fileNameDisplay" class="font-mono text-slate-400 truncate max-w-[200px]">file.jpg</span>
+              <button id="removeFileBtn" class="text-red-400 hover:text-red-300 font-semibold">Change File</button>
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
-            
-            <!-- Left Workspace: Upload, Criteria Checklist, Status (5 Columns) -->
-            <div class="lg:col-span-5 flex flex-col space-y-5">
-                
-                <!-- Upload Box -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center">
-                            <span class="w-2 h-2 rounded-full bg-walton-navy mr-2"></span>
-                            1. Select Pseudocode Document
-                        </h3>
-                        <span id="file-size-badge" class="text-xs text-slate-600 hidden"></span>
-                    </div>
+        <!-- Submit Button -->
+        <button id="convertBtn" 
+                disabled
+                class="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-900/30">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+          <span id="convertBtnText">Validate Hardware & Convert</span>
+        </button>
 
-                    <!-- Dropzone -->
-                    <div class="relative border-2 border-dashed border-slate-300 hover:border-walton-navy rounded-xl p-4 bg-slate-50 hover:bg-slate-100/70 transition flex flex-col items-center justify-center min-h-[220px] text-center cursor-pointer group" id="drop-zone">
-                        <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg, image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                        
-                        <!-- Upload Prompt -->
-                        <div id="upload-prompt" class="pointer-events-none flex flex-col items-center">
-                            <div class="w-12 h-12 rounded-full bg-blue-50 text-walton-navy flex items-center justify-center mb-2 group-hover:scale-105 transition">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                            </div>
-                            <p class="text-sm font-semibold text-slate-800">Drop handwritten note or click to browse</p>
-                            <p class="text-xs text-slate-600 mt-1">Accepts camera photos, scans, and phone images (JPG, PNG)</p>
-                            <p class="text-[11px] text-slate-600 mt-2 bg-slate-200/60 px-2 py-0.5 rounded">Client-side compression active (Prevents 503 timeouts)</p>
-                        </div>
-
-                        <!-- Image Preview -->
-                        <div id="preview-wrapper" class="hidden relative w-full h-56 rounded-lg overflow-hidden bg-slate-900 border border-slate-700">
-                            <img id="image-preview" class="w-full h-full object-contain" alt="Pseudocode preview" />
-                            <button type="button" id="clear-image-btn" class="absolute top-2 right-2 z-20 bg-slate-900/80 hover:bg-red-600 text-white p-1.5 rounded-md text-xs transition backdrop-blur-sm" title="Remove photo">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Trigger Button -->
-                    <button id="convert-btn" class="mt-4 w-full bg-walton-navy hover:bg-walton-lightNavy text-white font-bold py-3 px-4 rounded-xl transition duration-150 flex items-center justify-center shadow disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg class="w-5 h-5 mr-2 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                        Validate Hardware & Convert
-                    </button>
-
-                    <!-- Real-Time Pipeline Progress Indicator -->
-                    <div id="pipeline-status" class="mt-3 text-xs flex items-center justify-between text-slate-600 px-1 hidden">
-                        <span id="pipeline-stage-text" class="flex items-center">
-                            <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping mr-2"></span>
-                            Analyzing hardware ports...
-                        </span>
-                        <span id="active-model-badge" class="font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
-                            gemini-2.5-flash
-                        </span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 text-xs text-slate-600 space-y-3">
-                    <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center">
-                        <svg class="w-4 h-4 mr-1.5 text-walton-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                        </svg>
-                        Gatekeeper Conversion Criteria
-                    </h4>
-                    <div class="space-y-2">
-                        <div class="flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                            <span class="font-bold text-slate-700 text-sm">1.</span>
-                            <div>
-                                <strong class="text-slate-800">Port/Pin Designation Required:</strong>
-                                <p class="text-slate-600 mt-0.5">Every peripheral (motor, motor group, LED, bumper, distance sensor) must specify its port/pin (e.g. <span class="font-mono text-slate-800">pin A</span>, <span class="font-mono text-slate-800">pins 1+2</span>, <span class="font-mono text-slate-800">port 3</span>). Missing ports are rejected immediately.</p>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                            <span class="font-bold text-slate-700 text-sm">2.</span>
-                            <div>
-                                <strong class="text-slate-800">Literal Logic Execution (No Safety Fixes):</strong>
-                                <p class="text-slate-600 mt-0.5">If you start a motor without a stop command, the Python code will leave it running indefinitely so you can observe the logic bug during testing.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="lg:col-span-7 flex flex-col space-y-4">
-                
-                <!-- Main Output Terminal Container -->
-                <div class="bg-slate-900 rounded-2xl shadow-md border border-slate-800 flex flex-col flex-grow min-h-[480px] overflow-hidden relative">
-                    
-                    <!-- Loading Overlay with Model Cascade Information -->
-                    <div id="loading-overlay" class="hidden absolute inset-0 bg-slate-900/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center">
-                        <div class="w-14 h-14 border-4 border-slate-700 border-t-amber-400 rounded-full animate-spin mb-4"></div>
-                        <h4 id="loading-title" class="text-lg font-bold text-white mb-1">Verifying Hardware Declarations...</h4>
-                        <p id="loading-subtitle" class="text-slate-400 text-xs max-w-sm">Checking peripheral ports and formatting executable VEXcode V5 Python...</p>
-                        <div id="model-cascade-status" class="mt-4 text-[11px] font-mono text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-                            Attempting primary cluster: gemini-2.5-flash
-                        </div>
-                    </div>
-
-                    <!-- Terminal Navigation Header -->
-                    <div class="bg-slate-800/90 px-4 py-2.5 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
-                            <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
-                            <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
-                            <span class="ml-2 text-slate-300 font-mono text-xs font-semibold">vexcode_autonomous.py</span>
-                        </div>
-
-                        <!-- Action Bar for Successful Code -->
-                        <div id="output-actions" class="flex items-center space-x-2 hidden">
-                            <button id="download-code-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded text-xs font-mono flex items-center transition">
-                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                Download .py
-                            </button>
-                            <button id="copy-code-btn" class="bg-walton-crimson hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs font-mono flex items-center transition shadow">
-                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                <span id="copy-btn-label">Copy Code</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Output Content Area -->
-                    <div class="relative flex-grow flex flex-col overflow-hidden">
-                        
-                        <!-- REJECTION SCREEN (Shown when port designation is missing) -->
-                        <div id="rejection-panel" class="hidden absolute inset-0 z-20 bg-slate-900 overflow-y-auto p-6 flex flex-col justify-center items-center text-center">
-                            <div class="max-w-md w-full bg-slate-800/90 border-2 border-red-500/80 rounded-2xl p-6 shadow-2xl">
-                                <div class="w-14 h-14 bg-red-950/80 text-red-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-red-500/40">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                    </svg>
-                                </div>
-                                <h3 class="text-xl font-black text-red-400 tracking-tight">Conversion Denied</h3>
-                                <p class="text-xs uppercase font-bold text-red-300 tracking-wider mt-0.5">Hardware Port Missing</p>
-                                
-                                <div class="my-4 p-3.5 bg-slate-900/90 rounded-xl border border-red-900/50 text-left">
-                                    <p class="text-xs font-semibold text-slate-300 mb-1">Gatekeeper Diagnostic:</p>
-                                    <p id="rejection-diagnostic-text" class="text-xs text-red-200 font-mono leading-relaxed">
-                                        Missing port/pin designation for a peripheral.
-                                    </p>
-                                </div>
-
-                                <div class="text-xs text-slate-400 text-left bg-slate-900/50 p-3 rounded-lg border border-slate-700/60 mb-4">
-                                    <span class="font-bold text-slate-300">How to Fix Your Pseudocode:</span>
-                                    <ul class="list-disc ml-4 mt-1 space-y-1 text-slate-400">
-                                        <li>Specify port/pin for every device (e.g., <code class="text-amber-300">LED to Pin A</code>, <code class="text-amber-300">Motor to Port 1</code>).</li>
-                                        <li>Make sure crossed-out edits are cleanly scratched out.</li>
-                                        <li>Take a well-lit photo and re-upload.</li>
-                                    </ul>
-                                </div>
-
-                                <button id="rejection-dismiss-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-xl text-xs transition">
-                                    Revise Pseudocode & Try Again
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- ACCEPTED PYTHON CODE DISPLAY -->
-                        <pre id="code-output" class="p-5 text-slate-200 code-font text-xs leading-relaxed overflow-auto flex-grow whitespace-pre selection:bg-blue-600 selection:text-white"># ==============================================================================
-# VEXcode V5 Python Autonomous Script
-# Gatekeeper Status: Awaiting Pseudocode Submission
-# ==============================================================================
-# 
-# 1. Upload a picture of your handwritten pseudocode on the left.
-# 2. Every motor, LED, or sensor MUST declare a port or pin.
-# 3. Click "Validate Hardware & Convert" to generate and test your code.
-# ------------------------------------------------------------------------------</pre>
-                    </div>
-
-                </div>
-
-                <div id="accepted-insights" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    
-                    <!-- Hardware Port Mapping Card -->
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Hardware Port Mapping</h4>
-                        </div>
-                        <ul id="hardware-port-list" class="space-y-1.5 text-xs text-slate-600 font-mono">
-                            <!-- Populated dynamically -->
-                        </ul>
-                    </div>
-
-                    <!-- Runtime Logic Behavior Notes Card -->
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Runtime Logic Notes</h4>
-                        </div>
-                        <ul id="runtime-behavior-list" class="space-y-1.5 text-xs text-slate-600">
-                            <!-- Populated dynamically -->
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Pseudocode Transcription Accordion (Always Available to inspect reading) -->
-                <div id="transcription-card" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hidden">
-                    <button id="toggle-transcription-btn" class="w-full px-4 py-2.5 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left text-xs font-bold text-slate-700 transition">
-                        <span class="flex items-center">
-                            <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Handwriting OCR Transcription (How the Gatekeeper Read Your Notes)
-                        </span>
-                        <svg id="transcription-arrow" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <div id="transcription-body" class="p-4 bg-slate-50/50 border-t border-slate-200 text-xs text-slate-700 font-mono whitespace-pre-wrap hidden leading-relaxed">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
-            </div>
+        <!-- Dynamic Model & Status Feedback -->
+        <div id="statusBox" class="hidden rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs">
+          <div class="flex items-center gap-2 text-slate-300">
+            <div class="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+            <span id="statusMessage" class="truncate font-mono">Initializing...</span>
+          </div>
         </div>
-    </main>
 
-    <div id="api-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div class="flex items-center space-x-2">
-                    <div class="p-2 bg-amber-50 text-amber-600 rounded-lg">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-slate-800">Gemini API Key Configuration</h3>
-                </div>
-                <button id="close-api-modal-btn" class="text-slate-400 hover:text-slate-600 p-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
+      </div>
 
-            <div class="py-4 space-y-4">
-                <div>
-                    <label for="api-key-input" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                        Google Gemini API Key
-                    </label>
-                    <div class="relative flex items-center">
-                        <input type="password" id="api-key-input" class="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg text-sm code-font focus:ring-2 focus:ring-walton-navy focus:border-walton-navy outline-none" placeholder="AIzaSy..." />
-                        <button type="button" id="toggle-key-visibility" class="absolute right-2 text-slate-400 hover:text-slate-600 p-1" title="Show/Hide Key">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        </button>
-                    </div>
-                    <p class="text-[11px] text-slate-600 mt-1">Saved securely in your browser's <code class="font-mono text-slate-700">localStorage</code>. Never committed or sent to any server other than Google's API.</p>
-                </div>
-
-                <!-- API Key Generator Guidance & External Link -->
-                <div class="bg-amber-50 rounded-xl p-3.5 border border-amber-200/80 text-xs text-amber-900 space-y-2">
-                    <div class="font-bold flex items-center text-amber-800">
-                        <svg class="w-4 h-4 mr-1 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Need an API key? It takes 30 seconds:
-                    </div>
-                    <p class="leading-relaxed">
-                        Gemini API keys are <strong>100% free</strong> from Google AI Studio. You get thousands of free requests per day.
-                    </p>
-                    <p class="text-[11px] text-amber-800 bg-amber-100/70 p-2 rounded">
-                        <strong>Student / School Tip:</strong> If your school Google account blocks developer services, sign in with your personal <code class="font-mono">@gmail.com</code> account to generate your key.
-                    </p>
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded-lg text-xs transition shadow-sm">
-                        Open Google AI Studio &rarr; Create Free Key
-                    </a>
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
-                <button id="clear-api-key-btn" class="text-xs text-red-600 hover:text-red-800 font-semibold">
-                    Clear Key
-                </button>
-                <button id="save-api-key-btn" class="bg-walton-navy hover:bg-walton-lightNavy text-white px-4 py-2 rounded-lg text-xs font-bold transition">
-                    Save Key
-                </button>
-            </div>
-        </div>
     </div>
 
-    <script>
-        // Storage Keys
-        const STORAGE_KEY = 'vex_gemini_api_key';
+    <!-- RIGHT PANEL: Gatekeeper Results / VEX Python Code (7 Columns) -->
+    <div class="lg:col-span-7 flex flex-col space-y-6">
 
-        // Multi-Model Fallback Cascade to bypass 503 Overload and 429 Rate Limits
-        const MODEL_CASCADE = [
-            'gemini-3.8-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-3.5-flash'
-        ];
+      <!-- Placeholder State (Before Execution) -->
+      <div id="emptyState" class="h-full min-h-[420px] rounded-2xl border border-slate-800 bg-slate-900/50 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-3">
+        <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-400">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+          </svg>
+        </div>
+        <p class="text-sm font-medium text-slate-300">Ready for Hardware Verification</p>
+        <p class="text-xs max-w-sm text-slate-500 leading-relaxed">
+          Upload handwritten or typed pseudocode. The engine will inspect port bindings and generate direct VEXcode V5 Python code.
+        </p>
+      </div>
 
-        // State
-        let currentBase64 = null;
-        let currentMimeType = null;
-        let currentRawCode = "";
+      <!-- REJECTION CARD: When Hardware Gatekeeper Fails -->
+      <div id="rejectionCard" class="hidden rounded-2xl border border-red-700 bg-red-950/40 p-6 shadow-2xl space-y-5 animate-fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-red-900/60 border border-red-600 flex items-center justify-center text-red-300 flex-shrink-0">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-red-400 bg-red-900/40 px-2 py-0.5 rounded border border-red-800">
+              Hardware Criteria Failed
+            </span>
+            <h2 class="text-lg font-bold text-white mt-1">Peripheral Port Missing</h2>
+            <p class="text-xs text-red-200 mt-1 leading-relaxed" id="rejectionSummary">
+              VEX bots cannot execute abstract code without physical brain pin assignments.
+            </p>
+          </div>
+        </div>
 
-        // Elements
-        const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        const uploadPrompt = document.getElementById('upload-prompt');
-        const previewWrapper = document.getElementById('preview-wrapper');
-        const imagePreview = document.getElementById('image-preview');
-        const clearImageBtn = document.getElementById('clear-image-btn');
-        const fileSizeBadge = document.getElementById('file-size-badge');
-        const convertBtn = document.getElementById('convert-btn');
-        const pipelineStatus = document.getElementById('pipeline-status');
-        const pipelineStageText = document.getElementById('pipeline-stage-text');
-        const activeModelBadge = document.getElementById('active-model-badge');
+        <div class="bg-black/40 rounded-xl p-4 border border-red-800/60 space-y-2">
+          <p class="text-xs font-semibold text-red-300 uppercase tracking-wider">Unassigned Peripherals Found:</p>
+          <ul id="missingPeripheralsList" class="text-xs font-mono text-red-200 space-y-1 list-disc list-inside">
+            <!-- Dynamically populated -->
+          </ul>
+        </div>
 
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingTitle = document.getElementById('loading-title');
-        const loadingSubtitle = document.getElementById('loading-subtitle');
-        const modelCascadeStatus = document.getElementById('model-cascade-status');
+        <div class="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 text-xs text-slate-300 flex items-center justify-between">
+          <span>Action Required: Write the specific port or 3-wire pin next to each device on the paper and resubmit.</span>
+        </div>
+      </div>
 
-        const codeOutput = document.getElementById('code-output');
-        const outputActions = document.getElementById('output-actions');
-        const copyCodeBtn = document.getElementById('copy-code-btn');
-        const copyBtnLabel = document.getElementById('copy-btn-label');
-        const downloadCodeBtn = document.getElementById('download-code-btn');
+      <!-- SUCCESS CARD: Passed Gatekeeper & Generated Code -->
+      <div id="successCard" class="hidden space-y-6">
+        
+        <!-- Hardware Inspection Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Detected Ports Block -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              Detected Port Mapping
+            </h3>
+            <ul id="detectedPortsList" class="text-xs font-mono text-slate-300 space-y-1">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
 
-        const rejectionPanel = document.getElementById('rejection-panel');
-        const rejectionDiagnosticText = document.getElementById('rejection-diagnostic-text');
-        const rejectionDismissBtn = document.getElementById('rejection-dismiss-btn');
+          <!-- Runtime Behavioral Warnings (e.g. Runaway Motors) -->
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2 mb-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              Runtime Logic Behavior
+            </h3>
+            <ul id="runtimeNotesList" class="text-xs text-slate-300 space-y-1.5">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
 
-        const acceptedInsights = document.getElementById('accepted-insights');
-        const hardwarePortList = document.getElementById('hardware-port-list');
-        const runtimeBehaviorList = document.getElementById('runtime-behavior-list');
+        </div>
 
-        const transcriptionCard = document.getElementById('transcription-card');
-        const toggleTranscriptionBtn = document.getElementById('toggle-transcription-btn');
-        const transcriptionBody = document.getElementById('transcription-body');
-        const transcriptionArrow = document.getElementById('transcription-arrow');
+        <!-- Code Block Viewer -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="flex gap-1.5">
+                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+              </div>
+              <span class="text-xs font-mono text-slate-400 ml-2">vex_main.py</span>
+            </div>
 
-        // Modal Elements
-        const apiModal = document.getElementById('api-modal');
-        const openApiModalBtn = document.getElementById('open-api-modal-btn');
-        const closeApiModalBtn = document.getElementById('close-api-modal-btn');
-        const apiKeyInput = document.getElementById('api-key-input');
-        const saveApiKeyBtn = document.getElementById('save-api-key-btn');
-        const clearApiKeyBtn = document.getElementById('clear-api-key-btn');
-        const toggleKeyVisibility = document.getElementById('toggle-key-visibility');
-        const keyIndicator = document.getElementById('key-indicator');
+            <div class="flex items-center gap-2">
+              <button id="copyCodeBtn" 
+                      class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span id="copyBtnText">Copy Code</span>
+              </button>
 
-        function loadStoredApiKey() {
-            const saved = localStorage.getItem(STORAGE_KEY) || '';
-            apiKeyInput.value = saved;
-            updateKeyIndicator(saved);
-        }
+              <button id="downloadCodeBtn" 
+                      class="px-2.5 py-1 text-xs rounded-md bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700 flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span>Download .py</span>
+              </button>
+            </div>
+          </div>
 
-        function updateKeyIndicator(key) {
-            if (key && key.trim().length > 10) {
-                keyIndicator.className = "ml-2 w-2 h-2 rounded-full bg-emerald-400 inline-block";
-                keyIndicator.title = "Key Configured";
+          <pre class="p-4 overflow-x-auto text-xs leading-relaxed text-slate-200 font-mono max-h-[480px]"><code id="codeOutput"></code></pre>
+        </div>
+
+        <!-- Transcription Collapsible Accordion -->
+        <details class="group bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <summary class="px-4 py-3 cursor-pointer text-xs font-semibold text-slate-400 group-open:text-white flex items-center justify-between transition hover:bg-slate-850">
+            <span>View Raw Handwriting Transcription (OCR)</span>
+            <span class="transition group-open:rotate-180">&#9660;</span>
+          </summary>
+          <div class="p-4 pt-1 border-t border-slate-800/60 bg-black/30">
+            <pre id="transcriptionOutput" class="text-xs font-mono text-slate-400 whitespace-pre-wrap leading-normal"></pre>
+          </div>
+        </details>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= API KEY & HELP MODAL ================= -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <span>Gemini API Access</span>
+        </h3>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-300">
+        <p>
+          This engine analyzes pseudocode using Google's Multimodal Gemini models. Your key is stored securely in your browser's <code class="text-blue-400">localStorage</code>.
+        </p>
+
+        <div>
+          <label class="block text-slate-400 uppercase tracking-wider font-semibold mb-1 text-[11px]">Your Gemini API Key</label>
+          <div class="relative">
+            <input type="password" 
+                   id="apiKeyInput" 
+                   placeholder="AIzaSy..." 
+                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white pr-20 focus:outline-none focus:border-blue-500 font-mono">
+            <button id="toggleKeyVisibility" class="absolute right-2 top-2 text-slate-400 hover:text-white text-[11px] font-semibold">
+              Show
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
+          <p class="font-semibold text-slate-200">How to get a key:</p>
+          <ol class="list-decimal list-inside space-y-1 text-slate-400">
+            <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-medium">Google AI Studio</a>.</li>
+            <li>Sign in with your Google account.</li>
+            <li>Click <strong>Create API Key</strong> and paste it above.</li>
+          </ol>
+          <p class="text-[11px] text-amber-400/90 pt-1">
+            Tip: Standard personal Google accounts work immediately without school district IT firewall restrictions.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end pt-2">
+        <button id="clearKeyBtn" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-red-300">
+          Clear Key
+        </button>
+        <button id="saveKeyBtn" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white">
+          Save & Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // State management
+    let selectedImageBase64 = null;
+    let selectedImageMime = 'image/jpeg';
+    let currentVexCode = '';
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const dropzonePrompt = document.getElementById('dropzonePrompt');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const removeFileBtn = document.getElementById('removeFileBtn');
+    const convertBtn = document.getElementById('convertBtn');
+    const convertBtnText = document.getElementById('convertBtnText');
+    const statusBox = document.getElementById('statusBox');
+    const statusMessage = document.getElementById('statusMessage');
+
+    const emptyState = document.getElementById('emptyState');
+    const rejectionCard = document.getElementById('rejectionCard');
+    const rejectionSummary = document.getElementById('rejectionSummary');
+    const missingPeripheralsList = document.getElementById('missingPeripheralsList');
+    const successCard = document.getElementById('successCard');
+    const detectedPortsList = document.getElementById('detectedPortsList');
+    const runtimeNotesList = document.getElementById('runtimeNotesList');
+    const codeOutput = document.getElementById('codeOutput');
+    const transcriptionOutput = document.getElementById('transcriptionOutput');
+    const copyCodeBtn = document.getElementById('copyCodeBtn');
+    const copyBtnText = document.getElementById('copyBtnText');
+    const downloadCodeBtn = document.getElementById('downloadCodeBtn');
+
+    // API Key modal elements
+    const apiKeyBtn = document.getElementById('apiKeyBtn');
+    const apiKeyModal = document.getElementById('apiKeyModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const helpModalBtn = document.getElementById('helpModalBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
+    const apiKeyStatusDot = document.getElementById('apiKeyStatusDot');
+
+    // Load initial API key
+    function getStoredApiKey() {
+      return localStorage.getItem('vex_gemini_api_key') || '';
+    }
+
+    function updateApiKeyIndicator() {
+      const key = getStoredApiKey();
+      if (key && key.trim().length > 10) {
+        apiKeyStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+      } else {
+        apiKeyStatusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+      }
+    }
+
+    updateApiKeyIndicator();
+
+    // Modal controls
+    apiKeyBtn.onclick = () => {
+      apiKeyInput.value = getStoredApiKey();
+      apiKeyModal.classList.remove('hidden');
+    };
+    helpModalBtn.onclick = () => {
+      apiKeyInput.value = getStoredApiKey();
+      apiKeyModal.classList.remove('hidden');
+    };
+    closeModalBtn.onclick = () => apiKeyModal.classList.add('hidden');
+    
+    saveKeyBtn.onclick = () => {
+      const val = apiKeyInput.value.trim();
+      if (val) {
+        localStorage.setItem('vex_gemini_api_key', val);
+        // Clear cached model list so it re-queries with new key
+        localStorage.removeItem('vex_active_gemini_models_v2');
+      }
+      updateApiKeyIndicator();
+      apiKeyModal.classList.add('hidden');
+    };
+
+    clearKeyBtn.onclick = () => {
+      localStorage.removeItem('vex_gemini_api_key');
+      localStorage.removeItem('vex_active_gemini_models_v2');
+      apiKeyInput.value = '';
+      updateApiKeyIndicator();
+    };
+
+    toggleKeyVisibility.onclick = () => {
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        toggleKeyVisibility.textContent = 'Hide';
+      } else {
+        apiKeyInput.type = 'password';
+        toggleKeyVisibility.textContent = 'Show';
+      }
+    };
+
+    // File Drag and Drop Handling
+    dropzone.onclick = (e) => {
+      if (e.target !== removeFileBtn) fileInput.click();
+    };
+
+    dropzone.ondragover = (e) => {
+      e.preventDefault();
+      dropzone.classList.add('border-blue-500', 'bg-slate-900');
+    };
+
+    dropzone.ondragleave = () => {
+      dropzone.classList.remove('border-blue-500', 'bg-slate-900');
+    };
+
+    dropzone.ondrop = (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('border-blue-500', 'bg-slate-900');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    };
+
+    fileInput.onchange = () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    };
+
+    removeFileBtn.onclick = (e) => {
+      e.stopPropagation();
+      resetUpload();
+    };
+
+    function resetUpload() {
+      selectedImageBase64 = null;
+      fileInput.value = '';
+      previewContainer.classList.add('hidden');
+      dropzonePrompt.classList.remove('hidden');
+      convertBtn.disabled = true;
+    }
+
+    // High-Resolution Image Downscaling to Prevent Payloads & Timeouts
+    function handleFile(file) {
+      if (!file) return;
+      fileNameDisplay.textContent = file.name;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Max dimension 1600px keeps handwriting crisp while shrinking 10MB phone shots to ~300KB
+          const maxDim = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
             } else {
-                keyIndicator.className = "ml-2 w-2 h-2 rounded-full bg-red-500 inline-block";
-                keyIndicator.title = "Key Missing";
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
             }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get optimized base64 string
+          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          selectedImageBase64 = optimizedDataUrl.split(',')[1];
+          selectedImageMime = 'image/jpeg';
+
+          // Show preview
+          imagePreview.src = optimizedDataUrl;
+          dropzonePrompt.classList.add('hidden');
+          previewContainer.classList.remove('hidden');
+          convertBtn.disabled = false;
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Dynamic Gemini Model Discovery (Queries active models and caches them)
+    async function getDynamicFlashModels(apiKey) {
+      const cacheKey = 'vex_active_gemini_models_v2';
+      const cached = localStorage.getItem(cacheKey);
+
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {
+          localStorage.removeItem(cacheKey);
         }
+      }
 
-        openApiModalBtn.addEventListener('click', () => {
-            apiModal.classList.remove('hidden');
-        });
+      try {
+        setStatus(true, 'Querying Google for active Gemini models...');
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Filter for models supporting generateContent and flash tier
+          const eligible = (data.models || [])
+            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+            .map(m => m.name.replace(/^models\//, ''))
+            .filter(name => name.includes('flash') && !name.includes('embedding') && !name.includes('imagen'));
 
-        closeApiModalBtn.addEventListener('click', () => {
-            apiModal.classList.add('hidden');
-        });
+          // Sort newer version numbers first
+          eligible.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-        saveApiKeyBtn.addEventListener('click', () => {
-            const val = apiKeyInput.value.trim();
-            localStorage.setItem(STORAGE_KEY, val);
-            updateKeyIndicator(val);
-            apiModal.classList.add('hidden');
-        });
+          if (eligible.length > 0) {
+            localStorage.setItem(cacheKey, JSON.stringify(eligible));
+            return eligible;
+          }
+        }
+      } catch (err) {
+        console.warn('Dynamic model query failed; using static fallback cascade:', err);
+      }
 
-        clearApiKeyBtn.addEventListener('click', () => {
-            apiKeyInput.value = '';
-            localStorage.removeItem(STORAGE_KEY);
-            updateKeyIndicator('');
-        });
+      // Fallback list of models
+      return ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+    }
 
-        toggleKeyVisibility.addEventListener('click', () => {
-            apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
-        });
+    function setStatus(loading, message = '') {
+      if (loading) {
+        statusBox.classList.remove('hidden');
+        statusMessage.textContent = message;
+        convertBtn.disabled = true;
+        convertBtnText.textContent = 'Analyzing...';
+      } else {
+        statusBox.classList.add('hidden');
+        convertBtn.disabled = false;
+        convertBtnText.textContent = 'Validate Hardware & Convert';
+      }
+    }
 
-        async function processAndCompressImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const maxDimension = 1600;
-                        let width = img.width;
-                        let height = img.height;
+    // CONVERSION ENGINE
+    convertBtn.onclick = async () => {
+      const apiKey = getStoredApiKey();
+      if (!apiKey) {
+        apiKeyModal.classList.remove('hidden');
+        return;
+      }
 
-                        if (width > maxDimension || height > maxDimension) {
-                            if (width > height) {
-                                height = Math.round((height * maxDimension) / width);
-                                width = maxDimension;
-                            } else {
-                                width = Math.round((width * maxDimension) / height);
-                                height = maxDimension;
-                            }
-                        }
+      if (!selectedImageBase64) return;
 
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+      // Reset state
+      emptyState.classList.add('hidden');
+      rejectionCard.classList.add('hidden');
+      successCard.classList.add('hidden');
 
-                        // Export as clean JPEG to reduce mobile camera multi-megabyte payloads
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                        const base64Data = compressedDataUrl.split(',')[1];
-                        resolve({
-                            dataUrl: compressedDataUrl,
-                            mimeType: 'image/jpeg',
-                            base64: base64Data,
-                            originalSize: (file.size / (1024 * 1024)).toFixed(1) + 'MB',
-                            optimizedSize: (Math.round((base64Data.length * 3 / 4) / 1024)) + 'KB'
-                        });
-                    };
-                    img.onerror = reject;
-                };
-                reader.onerror = reject;
+      try {
+        setStatus(true, 'Discovering active models...');
+        const models = await getDynamicFlashModels(apiKey);
+
+        const promptText = `
+You are the strict Hardware Validator and VEXcode V5 Python Code Generator for high school engineering students.
+Analyze the handwritten or printed pseudocode image provided.
+
+CRITICAL HARDWARE RULES:
+1. STRICT PORT/PIN GATEKEEPER:
+   - Check every motor, motor group, LED, bumper, distance sensor, optical sensor, or peripheral mentioned.
+   - Every peripheral MUST have an explicit brain port or 3-wire pin assignment (e.g., 'pin A', 'pins 1+2', 'port 3').
+   - IF ANY PERIPHERAL DOES NOT DECLARE A PORT/PIN:
+     Immediately reject the code. Set "passedGatekeeper": false.
+     List every single missing peripheral in "missingPeripherals".
+     Provide a clear rejection reason in "rejectionReason".
+     Set "vexPythonCode" to "".
+
+2. LITERAL LOGIC PRESERVATION (DO NOT FIX BUGS):
+   - If the pseudocode passes the gatekeeper, write clean, real VEXcode V5 Python code.
+   - LITERAL LOGIC: If a student starts a motor/drive forward, but omits a "stop" instruction, DO NOT ADD A STOP COMMAND. The motor must continue spinning forever in code.
+   - If they include a while loop without a sleep or exit, write the literal code.
+   - Identify these bugs in the "runtimeNotes" array (e.g., "Motor group 1+2 will spin indefinitely because no stop command was written.").
+
+3. HANDWRITING & OCR RESILIENCE:
+   - Ignore crossed-out text or erased lines.
+   - Tolerant of OCR typos (e.g., interpret "White" as "While" if followed by a condition like '> 20cm').
+
+OUTPUT FORMAT:
+Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
+{
+  "passedGatekeeper": true,
+  "rejectionReason": "",
+  "missingPeripherals": [],
+  "detectedHardware": [
+    {"peripheral": "LED", "port": "3-Wire Pin A"},
+    {"peripheral": "Motor Group", "port": "Smart Ports 1, 2"}
+  ],
+  "runtimeNotes": [
+    "Motor group on ports 1+2 is never commanded to stop, so it will spin continuously."
+  ],
+  "rawTranscription": "Line-by-line transcription of the student paper...",
+  "vexPythonCode": "# VEXcode V5 Python Code\\nfrom vex import *\\n\\nbrain = Brain()\\n..."
+}
+`;
+
+        const payload = {
+          contents: [{
+            parts: [
+              { text: promptText },
+              {
+                inline_data: {
+                  mime_type: selectedImageMime,
+                  data: selectedImageBase64
+                }
+              }
+            ]
+          }],
+          generationConfig: {
+            temperature: 0.1
+          }
+        };
+
+        let response;
+        let data;
+        let successfulModel = '';
+
+        // Cascade through models
+        for (const model of models) {
+          setStatus(true, `Validating with ${model}...`);
+          try {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(apiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
             });
+
+            data = await response.json();
+
+            // Saturated (503), rate-limited (429), or deprecated (404)
+            if (response.status === 503 || response.status === 429 || response.status === 404) {
+              console.warn(`Model ${model} returned HTTP ${response.status}. Trying next available model...`);
+              continue;
+            }
+
+            if (response.ok) {
+              successfulModel = model;
+              break;
+            }
+          } catch (netErr) {
+            console.warn(`Attempt with ${model} failed:`, netErr);
+          }
         }
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            handleSelectedFile(file);
-        });
-
-        async function handleSelectedFile(file) {
-            resetOutputViews();
-            try {
-                pipelineStatus.classList.remove('hidden');
-                pipelineStageText.textContent = "Optimizing image resolution...";
-
-                const processed = await processAndCompressImage(file);
-                currentBase64 = processed.base64;
-                currentMimeType = processed.mimeType;
-
-                imagePreview.src = processed.dataUrl;
-                previewWrapper.classList.remove('hidden');
-                uploadPrompt.classList.add('hidden');
-
-                fileSizeBadge.textContent = `${processed.optimizedSize} (Optimized from ${processed.originalSize})`;
-                fileSizeBadge.classList.remove('hidden');
-
-                pipelineStageText.textContent = "Ready for Hardware Validation.";
-            } catch (err) {
-                console.error("Image loading failed:", err);
-                pipelineStageText.textContent = "Failed to load image.";
-            }
+        if (!response || !response.ok) {
+          localStorage.removeItem('vex_active_gemini_models_v2'); // Invalidate stale models
+          throw new Error(data?.error?.message || `All Gemini models failed or were unavailable (HTTP ${response?.status}).`);
         }
 
-        clearImageBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            resetUpload();
-        });
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("No response received from the vision model.");
 
-        function resetUpload() {
-            fileInput.value = '';
-            currentBase64 = null;
-            currentMimeType = null;
-            previewWrapper.classList.add('hidden');
-            uploadPrompt.classList.remove('hidden');
-            fileSizeBadge.classList.add('hidden');
-            pipelineStatus.classList.add('hidden');
-            resetOutputViews();
+        // Parse JSON output
+        let cleanJsonStr = rawText.trim();
+        if (cleanJsonStr.startsWith('```')) {
+          cleanJsonStr = cleanJsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
         }
 
-        function resetOutputViews() {
-            rejectionPanel.classList.add('hidden');
-            outputActions.classList.add('hidden');
-            acceptedInsights.classList.add('hidden');
-            transcriptionCard.classList.add('hidden');
-            codeOutput.textContent = `# ==============================================================================
-# VEXcode V5 Python Autonomous Script
-# Gatekeeper Status: Awaiting Pseudocode Submission
-# ==============================================================================
-# Ready to validate ports and convert to Python.`;
+        let result;
+        try {
+          result = JSON.parse(cleanJsonStr);
+        } catch (e) {
+          throw new Error("Unable to parse structured verification response. Please try again with a clearer photo.");
         }
 
-        rejectionDismissBtn.addEventListener('click', () => {
-            rejectionPanel.classList.add('hidden');
+        // Render gatekeeper results
+        renderResults(result);
+
+      } catch (err) {
+        console.error("Conversion error:", err);
+        alert(`Hardware Gatekeeper Error:\n${err.message}`);
+        emptyState.classList.remove('hidden');
+      } finally {
+        setStatus(false);
+      }
+    };
+
+    function renderResults(res) {
+      if (!res.passedGatekeeper) {
+        // REJECTION
+        rejectionSummary.textContent = res.rejectionReason || "One or more peripherals do not have designated physical ports.";
+        missingPeripheralsList.innerHTML = '';
+        (res.missingPeripherals || ['Unspecified peripheral missing port']).forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          missingPeripheralsList.appendChild(li);
+        });
+        rejectionCard.classList.remove('hidden');
+      } else {
+        // SUCCESS
+        currentVexCode = res.vexPythonCode || '# No code generated.';
+        codeOutput.textContent = currentVexCode;
+        transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
+
+        // Render detected ports
+        detectedPortsList.innerHTML = '';
+        (res.detectedHardware || []).forEach(hw => {
+          const li = document.createElement('li');
+          li.className = 'flex justify-between border-b border-slate-800/80 py-1';
+          li.innerHTML = `<span class="text-slate-400">${hw.peripheral}</span><span class="text-emerald-400 font-bold">${hw.port}</span>`;
+          detectedPortsList.appendChild(li);
         });
 
-        toggleTranscriptionBtn.addEventListener('click', () => {
-            transcriptionBody.classList.toggle('hidden');
-            transcriptionArrow.classList.toggle('rotate-180');
+        // Render runtime behavior notes
+        runtimeNotesList.innerHTML = '';
+        (res.runtimeNotes || ['All logic loops and commands appear standard.']).forEach(note => {
+          const li = document.createElement('li');
+          li.className = 'flex items-start gap-1.5';
+          li.innerHTML = `<span class="text-amber-400 mt-0.5">&#8226;</span><span>${note}</span>`;
+          runtimeNotesList.appendChild(li);
         });
 
-        copyCodeBtn.addEventListener('click', () => {
-            if (!currentRawCode) return;
-            try {
-                const textArea = document.createElement("textarea");
-                textArea.value = currentRawCode;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-999999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                textArea.remove();
+        successCard.classList.remove('hidden');
+      }
+    }
 
-                copyBtnLabel.textContent = "Copied!";
-                copyCodeBtn.classList.replace('bg-walton-crimson', 'bg-emerald-600');
-                setTimeout(() => {
-                    copyBtnLabel.textContent = "Copy Code";
-                    copyCodeBtn.classList.replace('bg-emerald-600', 'bg-walton-crimson');
-                }, 2000);
-            } catch (err) {
-                console.error("Copy failed", err);
-            }
-        });
+    // Code copy and download utilities
+    copyCodeBtn.onclick = () => {
+      if (!currentVexCode) return;
+      navigator.clipboard.writeText(currentVexCode).then(() => {
+        copyBtnText.textContent = 'Copied!';
+        setTimeout(() => copyBtnText.textContent = 'Copy Code', 2000);
+      });
+    };
 
-        downloadCodeBtn.addEventListener('click', () => {
-            if (!currentRawCode) return;
-            const blob = new Blob([currentRawCode], { type: 'text/x-python;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'vexcode_autonomous.py';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-
-        function buildPrompt() {
-            return `You are the strict VEX Hardware Gatekeeper and VEXcode V5 Python Compiler for high school robotics students at Walton Robotics.
-
-Your task is to analyze the handwritten or typed pseudocode in the uploaded image. 
-
-CRITICAL MANDATE - NOT A GRADER:
-This is a binary conversion gatekeeper. Students must follow physical robotics constraints.
-
-CRITERIA 1: PERIPHERAL PORT DECLARATIONS (STRICT GATEKEEPER CHECK)
-- Every peripheral used (LED, bumper switch, motor, motor group, distance sensor, inertial sensor, optical sensor, etc.) MUST have an explicit designated port or pin.
-- Acceptable syntax examples: "pin A", "pins 1+2", "port 3", "pin 3", "3-wire port H", "smart ports 1 and 2". Accept the words "pin", "port", or "slot" interchangeably.
-- Handwriting & OCR tolerance: Account for handwriting quirks:
-  * In VEX pseudocode, a handwritten "While" frequently looks like "White" (e.g. "While distance sensor > 20cm" might be misread as "White distance sensor > 20cm"). Do NOT treat "White" as an undeclared peripheral! It is a loop keyword ("While").
-  * Ignore text that is clearly scribbled out or crossed out with pen ink.
-- IF ANY PERIPHERAL DOES NOT HAVE A DECLARED PORT/PIN:
-  You MUST return REJECTED status and identify which peripheral lacks a port.
-
-CRITERIA 2: LITERAL TRANSLATION (PRESERVE LOGIC & BUGS INTENTIONALLY)
-- If all peripherals have valid ports/pins, convert the pseudocode into clean, syntactically correct VEXcode V5 Python code.
-- TRANSLATE THEIR EXACT ACTIONS: Do NOT add safety stops, do NOT fix their algorithm, and do NOT correct logic oversights.
-- For example: If they command "drive forward" and never provide a stop command, the Python code MUST start the motors spinning without any subsequent stop() call, leaving it to run continuously during testing.
-- If they specify a loop for 3 times, write a Python 'for i in range(3):' or 'while' loop.
-- Use standard VEXcode V5 Python library syntax:
-  from vex import *
-  brain = Brain()
-  # hardware definitions with their stated ports
-  # autonomous routine
-
-FORMAT YOUR RESPONSE USING THESE EXACT SECTION DELIMITERS:
-
-===DECISION===
-[Write ACCEPTED or REJECTED]
-
-===REJECTION_DIAGNOSTIC===
-[If REJECTED: Explain exactly which peripheral(s) lacked a port/pin declaration and advise the student to add the port designation. If ACCEPTED: write NONE]
-
-===TRANSCRIPTION===
-[Provide a clean, line-by-line transcription of the student's pseudocode, excluding crossed-out text]
-
-===HARDWARE_MAPPING===
-[If ACCEPTED, bullet list of detected peripherals and their assigned ports. E.g.:
-- LED: 3-Wire Pin A
-- Motor Group: Smart Ports 1 and 2
-- Distance Sensor: Smart Port 3
-If REJECTED, list what was detected and note which one is missing a port.]
-
-===RUNTIME_NOTES===
-[If ACCEPTED: Bullet list describing the exact literal behavior of their code, noting unstopped motors, loop iterations, or condition triggers. If REJECTED, write NONE]
-
-===VEX_PYTHON_CODE===
-[If ACCEPTED: Provide ONLY the executable VEXcode V5 Python code here. Do not wrap in markdown quotes if possible, or use standard python block. If REJECTED, write NONE]`;
-        }
-
-        convertBtn.addEventListener('click', async () => {
-            if (!currentBase64) {
-                pipelineStatus.classList.remove('hidden');
-                pipelineStageText.textContent = "Please upload an image first.";
-                return;
-            }
-
-            const apiKey = (localStorage.getItem(STORAGE_KEY) || apiKeyInput.value || '').trim();
-            if (!apiKey) {
-                apiModal.classList.remove('hidden');
-                return;
-            }
-
-            // Start conversion sequence
-            convertBtn.disabled = true;
-            loadingOverlay.classList.remove('hidden');
-            rejectionPanel.classList.add('hidden');
-            pipelineStatus.classList.remove('hidden');
-
-            const promptText = buildPrompt();
-
-            const requestPayload = {
-                contents: [{
-                    parts: [
-                        { text: promptText },
-                        {
-                            inline_data: {
-                                mime_type: currentMimeType,
-                                data: currentBase64
-                            }
-                        }
-                    ]
-                }],
-                generationConfig: {
-                    temperature: 0.1, // Strict deterministic analysis
-                }
-            };
-
-            let responseData = null;
-            let successfulModel = null;
-            let cascadeErrors = [];
-
-            // Cascade through models
-            for (let i = 0; i < MODEL_CASCADE.length; i++) {
-                const modelName = MODEL_CASCADE[i];
-                activeModelBadge.textContent = modelName;
-                modelCascadeStatus.textContent = `Attempting model: ${modelName} (${i + 1}/${MODEL_CASCADE.length})`;
-                pipelineStageText.textContent = `Connecting to ${modelName}...`;
-
-                try {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestPayload)
-                    });
-
-                    const json = await response.json();
-
-                    // If overloaded (503) or rate-limited (429), cascade to next model
-                    if (response.status === 503 || response.status === 429) {
-                        console.warn(`Model ${modelName} overloaded (Status ${response.status}). Trying next fallback...`);
-                        cascadeErrors.push(`${modelName}: HTTP ${response.status} (High Demand)`);
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        const errMsg = json.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-                        throw new Error(errMsg);
-                    }
-
-                    // Success!
-                    responseData = json;
-                    successfulModel = modelName;
-                    break;
-
-                } catch (err) {
-                    console.warn(`Attempt with ${modelName} encountered an error:`, err);
-                    cascadeErrors.push(`${modelName}: ${err.message}`);
-                }
-            }
-
-            loadingOverlay.classList.add('hidden');
-            convertBtn.disabled = false;
-
-            if (!responseData) {
-                showDiagnosticFailure(cascadeErrors);
-                return;
-            }
-
-            // Parse response
-            try {
-                const candidate = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!candidate) {
-                    throw new Error("No text response received from AI model.");
-                }
-                processGatekeeperOutput(candidate, successfulModel);
-            } catch (parseErr) {
-                console.error("Output parsing error:", parseErr);
-                showDiagnosticFailure(["Failed to parse model output: " + parseErr.message]);
-            }
-        });
-
-        function parseSection(fullText, sectionName, nextSectionName) {
-            const startTag = `===${sectionName}===`;
-            const startIndex = fullText.indexOf(startTag);
-            if (startIndex === -1) return '';
-
-            const contentStart = startIndex + startTag.length;
-            if (!nextSectionName) {
-                return fullText.slice(contentStart).trim();
-            }
-
-            const endTag = `===${nextSectionName}===`;
-            const endIndex = fullText.indexOf(endTag, contentStart);
-            if (endIndex === -1) {
-                return fullText.slice(contentStart).trim();
-            }
-
-            return fullText.slice(contentStart, endIndex).trim();
-        }
-
-        function processGatekeeperOutput(rawText, modelUsed) {
-            const decision = parseSection(rawText, 'DECISION', 'REJECTION_DIAGNOSTIC').toUpperCase();
-            const diagnostic = parseSection(rawText, 'REJECTION_DIAGNOSTIC', 'TRANSCRIPTION');
-            const transcription = parseSection(rawText, 'TRANSCRIPTION', 'HARDWARE_MAPPING');
-            const hardwareMapping = parseSection(rawText, 'HARDWARE_MAPPING', 'RUNTIME_NOTES');
-            const runtimeNotes = parseSection(rawText, 'RUNTIME_NOTES', 'VEX_PYTHON_CODE');
-            let pythonCode = parseSection(rawText, 'VEX_PYTHON_CODE', null);
-
-            // Clean code fences if included
-            pythonCode = pythonCode.replace(/^```python\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-
-            // Populate Transcription
-            if (transcription) {
-                transcriptionBody.textContent = transcription;
-                transcriptionCard.classList.remove('hidden');
-            }
-
-            // Check Acceptance vs Rejection
-            if (decision.includes('REJECTED')) {
-                // HARDWARE PORT MISSING REJECTION
-                rejectionDiagnosticText.textContent = diagnostic || "One or more peripherals (motor, LED, sensor) were declared without a specific hardware port or pin designation.";
-                rejectionPanel.classList.remove('hidden');
-                outputActions.classList.add('hidden');
-                acceptedInsights.classList.add('hidden');
-                pipelineStageText.textContent = "Rejected: Hardware Port Missing.";
-                return;
-            }
-
-            // SUCCESSFUL CONVERSION
-            rejectionPanel.classList.add('hidden');
-            currentRawCode = pythonCode;
-            codeOutput.textContent = pythonCode;
-            outputActions.classList.remove('hidden');
-
-            // Populate Hardware Port List
-            hardwarePortList.innerHTML = '';
-            if (hardwareMapping && hardwareMapping !== 'NONE') {
-                const lines = hardwareMapping.split('\n').filter(l => l.trim().length > 0);
-                lines.forEach(line => {
-                    const clean = line.replace(/^[-*]\s*/, '').trim();
-                    const li = document.createElement('li');
-                    li.className = "flex items-center text-slate-700";
-                    li.innerHTML = `<span class="text-emerald-500 mr-1.5 font-bold">&bull;</span> ${clean}`;
-                    hardwarePortList.appendChild(li);
-                });
-            } else {
-                hardwarePortList.innerHTML = '<li class="text-slate-600">No external hardware declared.</li>';
-            }
-
-            // Populate Runtime Behavior List
-            runtimeBehaviorList.innerHTML = '';
-            if (runtimeNotes && runtimeNotes !== 'NONE') {
-                const lines = runtimeNotes.split('\n').filter(l => l.trim().length > 0);
-                lines.forEach(line => {
-                    const clean = line.replace(/^[-*]\s*/, '').trim();
-                    const li = document.createElement('li');
-                    li.className = "flex items-start text-slate-700";
-                    li.innerHTML = `<span class="text-amber-500 mr-1.5 font-bold mt-0.5">&bull;</span> <span>${clean}</span>`;
-                    runtimeBehaviorList.appendChild(li);
-                });
-            } else {
-                runtimeBehaviorList.innerHTML = '<li class="text-slate-600">Literal execution converted.</li>';
-            }
-
-            acceptedInsights.classList.remove('hidden');
-            pipelineStageText.textContent = `Converted successfully with ${modelUsed}`;
-        }
-
-        function showDiagnosticFailure(errors) {
-            rejectionDiagnosticText.innerHTML = `
-                <div class="space-y-2">
-                    <p class="font-bold text-red-300">Connection or Model Service Spike:</p>
-                    <p>All fallback models were attempted. Details:</p>
-                    <ul class="list-disc ml-4 space-y-1 text-[11px] text-red-200">
-                        ${errors.map(e => `<li>${e}</li>`).join('')}
-                    </ul>
-                    <p class="text-[11px] text-slate-300 mt-2">Check your API key or wait 10 seconds for Google's server cluster demand to ease.</p>
-                </div>
-            `;
-            rejectionPanel.classList.remove('hidden');
-            pipelineStageText.textContent = "Pipeline failed. See diagnostics.";
-        }
-
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            loadStoredApiKey();
-        });
-    </script>
+    downloadCodeBtn.onclick = () => {
+      if (!currentVexCode) return;
+      const blob = new Blob([currentVexCode], { type: 'text/x-python' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'vex_robot_code.py';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+  </script>
 </body>
 </html>
