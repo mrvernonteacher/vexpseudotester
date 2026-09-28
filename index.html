@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEX Pseudocode to Python Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for the code area */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .loader {
+            border-top-color: #3b82f6;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        
+        <header class="mb-8 text-center md:text-left border-b pb-6 border-gray-200">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-blue-900 tracking-tight">VEX Pseudocode Converter</h1>
+            <p class="text-gray-600 mt-2 text-lg">Upload an image of your handwritten VEX bot pseudocode to instantly test it as VEXcode V5 Python.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Left Column: Upload -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col h-full">
+                <div class="mb-6">
+                    <label for="api-key" class="block text-sm font-medium text-gray-700 mb-1">Gemini API Key (Optional in Canvas)</label>
+                    <input type="password" id="api-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Enter API Key or leave blank">
+                </div>
+
+                <h2 class="text-xl font-bold mb-4 text-gray-800">1. Upload Pseudocode</h2>
+                
+                <div class="flex-grow flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 hover:bg-gray-100 transition relative overflow-hidden" id="drop-zone">
+                    <input type="file" id="file-input" accept="image/*,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    
+                    <div id="upload-prompt" class="text-center pointer-events-none">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-600 font-medium">Click or drag image here</p>
+                        <p class="text-gray-400 text-sm mt-1">Supports PNG, JPG, JPEG</p>
+                    </div>
+
+                    <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-contain p-2 bg-gray-900 pointer-events-none" alt="Preview" />
+                </div>
+
+                <div class="mt-6">
+                    <button id="convert-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Convert to Python
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Output -->
+            <div class="bg-slate-900 rounded-2xl shadow-sm border border-slate-800 flex flex-col h-[500px] lg:h-auto overflow-hidden relative">
+                
+                <!-- Loading Overlay -->
+                <div id="loading-overlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+                    <p class="text-blue-400 font-semibold animate-pulse">Analyzing pseudocode...</p>
+                </div>
+
+                <!-- Header -->
+                <div class="bg-slate-800 px-4 py-3 flex justify-between items-center border-b border-slate-700">
+                    <h2 class="text-slate-200 font-medium font-mono text-sm">generated_code.py</h2>
+                    <button id="copy-btn" class="text-slate-400 hover:text-white transition focus:outline-none flex items-center text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg hidden">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Copy Code
+                    </button>
+                </div>
+
+                <!-- Content Area -->
+                <div class="flex-grow relative overflow-hidden flex flex-col relative">
+                    
+                    <!-- Error Message -->
+                    <div id="error-container" class="hidden absolute inset-0 z-10 bg-red-50/95 flex items-center justify-center p-6 text-center">
+                        <div>
+                            <svg class="w-16 h-16 text-red-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <h3 class="text-2xl font-bold text-red-700 mb-2">Requirement Failed</h3>
+                            <p id="error-text" class="text-red-900 font-medium text-lg max-w-md mx-auto"></p>
+                        </div>
+                    </div>
+
+                    <!-- Code Display -->
+                    <pre id="code-output" class="p-6 text-slate-300 font-mono text-sm leading-relaxed overflow-y-auto w-full h-full whitespace-pre-wrap">/* 
+  Upload an image of your pseudocode and click 
+  "Convert to Python" to see the result here. 
+*/</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const convertBtn = document.getElementById('convert-btn');
+        const codeOutput = document.getElementById('code-output');
+        const errorContainer = document.getElementById('error-container');
+        const errorText = document.getElementById('error-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        let currentBase64 = null;
+        let currentMimeType = null;
+
+        // Handle File Selection
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Reset UI
+            hideError();
+            codeOutput.textContent = "/* Ready to convert... */";
+            copyBtn.classList.add('hidden');
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                // Set Preview
+                imagePreview.src = event.target.result;
+                imagePreview.classList.remove('hidden');
+                uploadPrompt.classList.add('hidden');
+
+                // Extract Base64 and MimeType for API
+                const dataUrl = event.target.result;
+                currentMimeType = dataUrl.substring(dataUrl.indexOf(':') + 1, dataUrl.indexOf(';'));
+                currentBase64 = dataUrl.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // UI Helpers
+        function showError(message) {
+            errorText.textContent = message;
+            errorContainer.classList.remove('hidden');
+            codeOutput.classList.add('hidden');
+            copyBtn.classList.add('hidden');
+        }
+
+        function hideError() {
+            errorContainer.classList.add('hidden');
+            codeOutput.classList.remove('hidden');
+        }
+
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+            convertBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+            convertBtn.disabled = false;
+        }
+
+        // Copy Code
+        copyBtn.addEventListener('click', () => {
+            const code = codeOutput.textContent;
+            try {
+                // Try modern clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(code).then(() => showCopySuccess());
+                } else {
+                    // Fallback
+                    const textArea = document.createElement("textarea");
+                    textArea.value = code;
+                    textArea.style.position = "fixed";
+                    textArea.style.left = "-999999px";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    textArea.remove();
+                    showCopySuccess();
+                }
+            } catch (err) {
+                console.error("Failed to copy text", err);
+            }
+        });
+
+        function showCopySuccess() {
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<svg class="w-4 h-4 mr-1.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!`;
+            setTimeout(() => { copyBtn.innerHTML = originalHTML; }, 2000);
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (!currentBase64) {
+                showError("Please upload an image of your pseudocode first.");
+                return;
+            }
+
+            showLoading();
+            hideError();
+
+            const userKey = document.getElementById('api-key').value.trim();
+            const apiKey = userKey || ""; // Falls back to injected Canvas key if empty
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const promptText = `You are a strict but fair engineering grading assistant. Read the uploaded image of student handwritten pseudocode for a VEX V5 robot. 
+Rule 1: Port Declaration Check. Every peripheral (LED, motor, sensor) must be assigned a port/pin. If a peripheral is mentioned without a port, output EXACTLY "REQUIREMENT FAILED: Missing port/pin designation for a peripheral." Accept the words "pin" or "port" interchangeably. Account for handwriting errors: for example, misreading "While" as "White" before "distance sensor" should NOT trigger a missing port error for a mysterious "White sensor". 
+Rule 2: Literal Translation. Translate the pseudocode to VEX V5 Python exactly as written. Do not add safety stops or fix their logic. If they command a drive forward but never stop it, the generated code should reflect that literal continuous movement. Return ONLY the Python code inside a markdown code block, or the Requirement Failed message.`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: promptText },
+                            {
+                                inlineData: {
+                                    mimeType: currentMimeType,
+                                    data: currentBase64
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 && 
+                    result.candidates[0].content && result.candidates[0].content.parts && 
+                    result.candidates[0].content.parts.length > 0) {
+                    
+                    const textResponse = result.candidates[0].content.parts[0].text;
+                    
+                    if (textResponse.includes("REQUIREMENT FAILED")) {
+                        showError("REQUIREMENT FAILED: Missing port/pin designation for a peripheral.");
+                    } else {
+                        // Extract code from markdown block if present
+                        const codeMatch = textResponse.match(/```(?:python)?\s*\n([\s\S]*?)```/i);
+                        if (codeMatch && codeMatch[1]) {
+                            codeOutput.textContent = codeMatch[1].trim();
+                        } else {
+                            // Fallback if the model didn't use a markdown block
+                            codeOutput.textContent = textResponse.trim();
+                        }
+                        copyBtn.classList.remove('hidden');
+                    }
+                } else {
+                    showError("Could not process the image. Please try again.");
+                }
+
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                showError("A network or server error occurred. Please try again.");
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>
