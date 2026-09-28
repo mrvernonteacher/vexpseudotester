@@ -74,7 +74,7 @@
   <!-- ================= MAIN APP CONTAINER ================= -->
   <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
     
-    <!-- LEFT PANEL: Upload & Gatekeeper Rules (5 Columns) -->
+    <!-- LEFT PANEL: Capture & Gatekeeper Rules (5 Columns) -->
     <div class="lg:col-span-5 space-y-6">
       
       <!-- Gatekeeper Description Banner -->
@@ -89,47 +89,100 @@
           <div>
             <h2 class="text-sm font-bold text-white tracking-wide uppercase">Hardware Gatekeeper Criteria</h2>
             <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-              This engine does not award grades. It enforces physical robotics constraints:
+              This engine enforces physical robotics constraints:
             </p>
             <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
-              <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit port or pin designation are immediately rejected.</li>
+              <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit brain port or 3-wire pin assignment are immediately rejected.</li>
               <li><strong class="text-amber-400">Literal Logic Execution:</strong> If a motor is commanded to start but never stopped, it will spin indefinitely in the generated code.</li>
             </ul>
           </div>
         </div>
       </div>
 
-      <!-- Upload Dropzone Card -->
+      <!-- Ingestion Card (File Upload + Webcam Viewfinder) -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
-        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Pseudocode Document (Image or PDF)</label>
         
-        <div id="dropzone" 
-             class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 flex flex-col items-center justify-center min-h-[220px]">
-          
-          <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
-          
-          <div id="dropzonePrompt" class="space-y-3 flex flex-col items-center">
-            <div class="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        <!-- Tab Selector: File Upload vs Camera -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Source Pseudocode</label>
+          <div class="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+            <button id="modeUploadBtn" class="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition">
+              Upload File
+            </button>
+            <button id="modeCameraBtn" class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition">
+              📷 Use Camera
+            </button>
+          </div>
+        </div>
+        
+        <!-- SECTION A: Drag & Drop Dropzone -->
+        <div id="uploadModeContainer" class="space-y-3">
+          <div id="dropzone" 
+               class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 flex flex-col items-center justify-center min-h-[220px]">
+            
+            <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
+            
+            <div id="dropzonePrompt" class="space-y-3 flex flex-col items-center">
+              <div class="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-slate-200">Click to upload or drag & drop</p>
+                <p class="text-xs text-slate-500 mt-1">Photos, JPG, PNG, or PDF</p>
+              </div>
+              <span class="inline-block text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono">Auto-scaled for OCR</span>
+            </div>
+
+            <!-- Preview Container -->
+            <div id="previewContainer" class="hidden w-full space-y-3">
+              <div class="relative w-full max-h-60 rounded-lg overflow-hidden bg-black/40 border border-slate-700">
+                <img id="imagePreview" src="" alt="Pseudocode preview" class="w-full h-full object-contain max-h-56">
+              </div>
+              <div class="flex items-center justify-between text-xs px-1">
+                <span id="fileNameDisplay" class="font-mono text-slate-400 truncate max-w-[200px]">file.jpg</span>
+                <button id="removeFileBtn" class="text-red-400 hover:text-red-300 font-semibold">Change / Retake</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: Live Webcam Viewfinder -->
+        <div id="cameraModeContainer" class="hidden space-y-3">
+          <div class="relative rounded-xl overflow-hidden bg-black border-2 border-slate-700 min-h-[240px] flex items-center justify-center">
+            
+            <!-- Live Video Feed -->
+            <video id="webcamVideo" autoplay playsinline muted class="w-full h-auto max-h-[300px] object-cover"></video>
+
+            <!-- Guide Target Box Overlay -->
+            <div class="absolute inset-4 border border-dashed border-amber-400/50 rounded-lg pointer-events-none flex items-center justify-center">
+              <span class="text-[11px] text-amber-300/80 bg-black/60 px-2 py-0.5 rounded backdrop-blur">
+                Align Pseudocode Here
+              </span>
+            </div>
+
+            <!-- Camera Switch Lens Button -->
+            <button id="switchCameraBtn" 
+                    title="Flip Camera Lens"
+                    class="absolute top-3 right-3 p-2 bg-slate-900/80 hover:bg-slate-800 text-white rounded-lg border border-slate-700 shadow backdrop-blur transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
               </svg>
-            </div>
-            <div>
-              <p class="text-sm font-medium text-slate-200">Click to upload or drag & drop</p>
-              <p class="text-xs text-slate-500 mt-1">Camera photos, JPG, PNG, or PDF</p>
-            </div>
-            <span class="inline-block text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono">Max size scaled automatically</span>
+            </button>
           </div>
 
-          <!-- Preview Container -->
-          <div id="previewContainer" class="hidden w-full space-y-3">
-            <div class="relative w-full max-h-60 rounded-lg overflow-hidden bg-black/40 border border-slate-700">
-              <img id="imagePreview" src="" alt="Pseudocode preview" class="w-full h-full object-contain max-h-56">
-            </div>
-            <div class="flex items-center justify-between text-xs px-1">
-              <span id="fileNameDisplay" class="font-mono text-slate-400 truncate max-w-[200px]">file.jpg</span>
-              <button id="removeFileBtn" class="text-red-400 hover:text-red-300 font-semibold">Change File</button>
-            </div>
+          <!-- Capture Trigger Button -->
+          <div class="flex gap-2">
+            <button id="snapPhotoBtn" 
+                    class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40">
+              <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+              <span>Snap Photo</span>
+            </button>
+            <button id="cancelCameraBtn" 
+                    class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Cancel
+            </button>
           </div>
         </div>
 
@@ -167,7 +220,7 @@
         </div>
         <p class="text-sm font-medium text-slate-300">Ready for Hardware Verification</p>
         <p class="text-xs max-w-sm text-slate-500 leading-relaxed">
-          Upload handwritten or typed pseudocode. The engine will inspect port bindings and generate direct VEXcode V5 Python code.
+          Hold pseudocode up to your webcam or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python code.
         </p>
       </div>
 
@@ -341,6 +394,18 @@
     let selectedImageBase64 = null;
     let selectedImageMime = 'image/jpeg';
     let currentVexCode = '';
+    let cameraStream = null;
+    let currentFacingMode = 'environment'; // default to rear camera on mobile/tablet, falls back to webcam on laptops
+
+    // DOM Elements - Upload & Camera
+    const modeUploadBtn = document.getElementById('modeUploadBtn');
+    const modeCameraBtn = document.getElementById('modeCameraBtn');
+    const uploadModeContainer = document.getElementById('uploadModeContainer');
+    const cameraModeContainer = document.getElementById('cameraModeContainer');
+    const webcamVideo = document.getElementById('webcamVideo');
+    const snapPhotoBtn = document.getElementById('snapPhotoBtn');
+    const switchCameraBtn = document.getElementById('switchCameraBtn');
+    const cancelCameraBtn = document.getElementById('cancelCameraBtn');
 
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
@@ -354,6 +419,7 @@
     const statusBox = document.getElementById('statusBox');
     const statusMessage = document.getElementById('statusMessage');
 
+    // DOM Elements - Results
     const emptyState = document.getElementById('emptyState');
     const rejectionCard = document.getElementById('rejectionCard');
     const rejectionSummary = document.getElementById('rejectionSummary');
@@ -367,7 +433,7 @@
     const copyBtnText = document.getElementById('copyBtnText');
     const downloadCodeBtn = document.getElementById('downloadCodeBtn');
 
-    // API Key modal elements
+    // DOM Elements - API Key Modal
     const apiKeyBtn = document.getElementById('apiKeyBtn');
     const apiKeyModal = document.getElementById('apiKeyModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -378,7 +444,7 @@
     const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
     const apiKeyStatusDot = document.getElementById('apiKeyStatusDot');
 
-    // Load initial API key
+    // API Key Storage Utilities
     function getStoredApiKey() {
       return localStorage.getItem('vex_gemini_api_key') || '';
     }
@@ -394,7 +460,6 @@
 
     updateApiKeyIndicator();
 
-    // Modal controls
     apiKeyBtn.onclick = () => {
       apiKeyInput.value = getStoredApiKey();
       apiKeyModal.classList.remove('hidden');
@@ -409,8 +474,7 @@
       const val = apiKeyInput.value.trim();
       if (val) {
         localStorage.setItem('vex_gemini_api_key', val);
-        // Clear cached model list so it re-queries with new key
-        localStorage.removeItem('vex_active_gemini_models_v2');
+        localStorage.removeItem('vex_active_gemini_models_v2'); // Flush cache on new key
       }
       updateApiKeyIndicator();
       apiKeyModal.classList.add('hidden');
@@ -433,7 +497,79 @@
       }
     };
 
-    // File Drag and Drop Handling
+    // ================= WEBCAM & CAPTURE LOGIC =================
+    modeUploadBtn.onclick = () => {
+      stopCameraStream();
+      modeUploadBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition';
+      modeCameraBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition';
+      uploadModeContainer.classList.remove('hidden');
+      cameraModeContainer.classList.add('hidden');
+    };
+
+    modeCameraBtn.onclick = async () => {
+      modeCameraBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition';
+      modeUploadBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition';
+      uploadModeContainer.classList.add('hidden');
+      cameraModeContainer.classList.remove('hidden');
+      await startCameraStream();
+    };
+
+    async function startCameraStream() {
+      stopCameraStream();
+      try {
+        const constraints = {
+          video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          }
+        };
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        webcamVideo.srcObject = cameraStream;
+      } catch (err) {
+        console.error('Camera access error:', err);
+        alert('Could not start camera. Please verify camera permissions in your browser or try uploading a picture.');
+        modeUploadBtn.click();
+      }
+    }
+
+    function stopCameraStream() {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      }
+      webcamVideo.srcObject = null;
+    }
+
+    switchCameraBtn.onclick = async (e) => {
+      e.stopPropagation();
+      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      await startCameraStream();
+    };
+
+    cancelCameraBtn.onclick = () => {
+      modeUploadBtn.click();
+    };
+
+    snapPhotoBtn.onclick = () => {
+      if (!cameraStream || !webcamVideo.videoWidth) return;
+
+      // Draw current video frame to an offscreen canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = webcamVideo.videoWidth;
+      canvas.height = webcamVideo.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+
+      // Process downscaled JPEG for OCR
+      optimizeAndLoadFromCanvas(canvas, 'Webcam_Snap.jpg');
+      
+      // Stop stream and switch to review view
+      stopCameraStream();
+      modeUploadBtn.click();
+    };
+
+    // ================= FILE UPLOAD & PREPARATION =================
     dropzone.onclick = (e) => {
       if (e.target !== removeFileBtn) fileInput.click();
     };
@@ -470,53 +606,58 @@
       convertBtn.disabled = true;
     }
 
-    // High-Resolution Image Downscaling to Prevent Payloads & Timeouts
     function handleFile(file) {
       if (!file) return;
-      fileNameDisplay.textContent = file.name;
-
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // Max dimension 1600px keeps handwriting crisp while shrinking 10MB phone shots to ~300KB
-          const maxDim = 1600;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-
           const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
+          canvas.width = img.width;
+          canvas.height = img.height;
           const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Get optimized base64 string
-          const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          selectedImageBase64 = optimizedDataUrl.split(',')[1];
-          selectedImageMime = 'image/jpeg';
-
-          // Show preview
-          imagePreview.src = optimizedDataUrl;
-          dropzonePrompt.classList.add('hidden');
-          previewContainer.classList.remove('hidden');
-          convertBtn.disabled = false;
+          ctx.drawImage(img, 0, 0);
+          optimizeAndLoadFromCanvas(canvas, file.name);
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    // Dynamic Gemini Model Discovery (Queries active models and caches them)
+    // Downscale and compress canvas to max 1600px at 0.85 JPEG quality
+    function optimizeAndLoadFromCanvas(sourceCanvas, label = 'Captured Image') {
+      const maxDim = 1600;
+      let width = sourceCanvas.width;
+      let height = sourceCanvas.height;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      const scaledCanvas = document.createElement('canvas');
+      scaledCanvas.width = width;
+      scaledCanvas.height = height;
+      const ctx = scaledCanvas.getContext('2d');
+      ctx.drawImage(sourceCanvas, 0, 0, width, height);
+
+      const optimizedDataUrl = scaledCanvas.toDataURL('image/jpeg', 0.85);
+      selectedImageBase64 = optimizedDataUrl.split(',')[1];
+      selectedImageMime = 'image/jpeg';
+
+      fileNameDisplay.textContent = label;
+      imagePreview.src = optimizedDataUrl;
+      dropzonePrompt.classList.add('hidden');
+      previewContainer.classList.remove('hidden');
+      convertBtn.disabled = false;
+    }
+
+    // ================= DYNAMIC GEMINI DISCOVERY =================
     async function getDynamicFlashModels(apiKey) {
       const cacheKey = 'vex_active_gemini_models_v2';
       const cached = localStorage.getItem(cacheKey);
@@ -535,13 +676,11 @@
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         if (res.ok) {
           const data = await res.json();
-          // Filter for models supporting generateContent and flash tier
           const eligible = (data.models || [])
             .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
             .map(m => m.name.replace(/^models\//, ''))
             .filter(name => name.includes('flash') && !name.includes('embedding') && !name.includes('imagen'));
 
-          // Sort newer version numbers first
           eligible.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
           if (eligible.length > 0) {
@@ -550,11 +689,10 @@
           }
         }
       } catch (err) {
-        console.warn('Dynamic model query failed; using static fallback cascade:', err);
+        console.warn('Dynamic model query failed; using fallback cascade:', err);
       }
 
-      // Fallback list of models
-      return ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash'];
+      return ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash'];
     }
 
     function setStatus(loading, message = '') {
@@ -570,7 +708,7 @@
       }
     }
 
-    // CONVERSION ENGINE
+    // ================= CONVERSION ENGINE =================
     convertBtn.onclick = async () => {
       const apiKey = getStoredApiKey();
       if (!apiKey) {
@@ -580,13 +718,12 @@
 
       if (!selectedImageBase64) return;
 
-      // Reset state
       emptyState.classList.add('hidden');
       rejectionCard.classList.add('hidden');
       successCard.classList.add('hidden');
 
       try {
-        setStatus(true, 'Discovering active models...');
+        setStatus(true, 'Connecting to Gemini...');
         const models = await getDynamicFlashModels(apiKey);
 
         const promptText = `
@@ -652,7 +789,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
         let data;
         let successfulModel = '';
 
-        // Cascade through models
         for (const model of models) {
           setStatus(true, `Validating with ${model}...`);
           try {
@@ -665,9 +801,8 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
 
             data = await response.json();
 
-            // Saturated (503), rate-limited (429), or deprecated (404)
             if (response.status === 503 || response.status === 429 || response.status === 404) {
-              console.warn(`Model ${model} returned HTTP ${response.status}. Trying next available model...`);
+              console.warn(`Model ${model} returned HTTP ${response.status}. Falling back...`);
               continue;
             }
 
@@ -681,14 +816,13 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
         }
 
         if (!response || !response.ok) {
-          localStorage.removeItem('vex_active_gemini_models_v2'); // Invalidate stale models
-          throw new Error(data?.error?.message || `All Gemini models failed or were unavailable (HTTP ${response?.status}).`);
+          localStorage.removeItem('vex_active_gemini_models_v2');
+          throw new Error(data?.error?.message || `All Gemini models were unavailable (HTTP ${response?.status}).`);
         }
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("No response received from the vision model.");
 
-        // Parse JSON output
         let cleanJsonStr = rawText.trim();
         if (cleanJsonStr.startsWith('```')) {
           cleanJsonStr = cleanJsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
@@ -698,10 +832,9 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
         try {
           result = JSON.parse(cleanJsonStr);
         } catch (e) {
-          throw new Error("Unable to parse structured verification response. Please try again with a clearer photo.");
+          throw new Error("Unable to parse structured verification response. Try retaking a sharper picture with even lighting.");
         }
 
-        // Render gatekeeper results
         renderResults(result);
 
       } catch (err) {
@@ -715,7 +848,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
 
     function renderResults(res) {
       if (!res.passedGatekeeper) {
-        // REJECTION
         rejectionSummary.textContent = res.rejectionReason || "One or more peripherals do not have designated physical ports.";
         missingPeripheralsList.innerHTML = '';
         (res.missingPeripherals || ['Unspecified peripheral missing port']).forEach(item => {
@@ -725,12 +857,10 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
         });
         rejectionCard.classList.remove('hidden');
       } else {
-        // SUCCESS
         currentVexCode = res.vexPythonCode || '# No code generated.';
         codeOutput.textContent = currentVexCode;
         transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
 
-        // Render detected ports
         detectedPortsList.innerHTML = '';
         (res.detectedHardware || []).forEach(hw => {
           const li = document.createElement('li');
@@ -739,7 +869,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
           detectedPortsList.appendChild(li);
         });
 
-        // Render runtime behavior notes
         runtimeNotesList.innerHTML = '';
         (res.runtimeNotes || ['All logic loops and commands appear standard.']).forEach(note => {
           const li = document.createElement('li');
