@@ -276,7 +276,7 @@
                        class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none transition pr-24">
                 <span class="absolute right-3 text-xs font-mono text-blue-400 pointer-events-none font-bold">.v5python</span>
               </div>
-              <p id="fileNameHelp" class="text-[11px] text-slate-500 mt-1">Naming your file embeds your project metadata into VEXcode V5.</p>
+              <p id="fileNameHelp" class="text-[11px] text-slate-500 mt-1">Naming your file embeds project metadata into VEXcode V5.</p>
             </div>
 
             <div class="w-full sm:w-48 flex-shrink-0">
@@ -424,7 +424,7 @@
     // State variables
     let selectedImageBase64 = null;
     let selectedImageMime = 'image/jpeg';
-    let rawRobotConfigCode = '';
+    let rawHardwareDeclarations = '';
     let rawUserProjectCode = '';
     let assembledPythonSource = '';
     let cameraStream = null;
@@ -771,15 +771,14 @@
     }
 
     // ================= CODE ASSEMBLY & VEX TEMPLATING =================
+    // IMPORTANT: Hardware declarations live OUTSIDE the VEXcode GUI wipe zone
     function rebuildPythonSource() {
       const projName = (projectNameInput.value.trim() || 'VEXcode_Project').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const author = authorNameInput.value.trim() || 'Walton Robotics Student';
       const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-      // Update Header block
       editorFileNameDisplay.textContent = `${projName}.v5python`;
 
-      // Official VEXcode V5 Python source structure
       assembledPythonSource = 
 `#region VEXcode Generated Robot Configuration
 from vex import *
@@ -788,9 +787,6 @@ import math
 
 # Brain should be defined by default
 brain = Brain()
-
-# Robot configuration code
-${rawRobotConfigCode || '# No explicit hardware peripherals configured'}
 
 # wait for rotation sensor to fully initialize
 wait(30, MSEC)
@@ -828,7 +824,14 @@ print("\\033[2J")
 # Library imports
 from vex import *
 
-# Begin project code
+# ==========================================
+# HARDWARE CONFIGURATION (Validated Gatekeeper)
+# ==========================================
+${rawHardwareDeclarations || '# No hardware peripherals configured'}
+
+# ==========================================
+# USER AUTONOMOUS LOGIC
+# ==========================================
 ${rawUserProjectCode || '# No user logic written'}
 `;
 
@@ -906,30 +909,42 @@ CRITICAL HARDWARE RULES:
      Immediately reject the code. Set "passedGatekeeper": false.
      List every single missing peripheral in "missingPeripherals".
      Provide a clear rejection reason in "rejectionReason".
-     Set "robotConfigCode" to "" and "userProjectCode" to "".
+     Set "hardwareDeclarations" to "" and "userProjectCode" to "".
 
 2. LITERAL LOGIC PRESERVATION (DO NOT FIX BUGS):
    - If the pseudocode passes the gatekeeper, prepare real VEXcode V5 Python code.
    - LITERAL LOGIC: If a student starts a motor/drive forward, but omits a "stop" instruction, DO NOT ADD A STOP COMMAND. The motor must continue spinning forever in code.
    - If they include a while loop without a sleep or exit, write the literal code.
-   - Identify these bugs in the "runtimeNotes" array (e.g., "Motor group 1+2 will spin indefinitely because no stop command was written.").
+   - Identify these bugs in the "runtimeNotes" array (e.g., "Motor group on pins 1+2 will spin indefinitely because no stop command was written.").
 
-3. SPLIT CODE GENERATION:
-   - "robotConfigCode": Put ONLY the device declarations that belong in the Robot Configuration block.
-     Example:
+3. STRICT VEXCODE V5 PYTHON SYNTAX (DO NOT DEVIATE):
+   - MOTORS & MOTOR GROUPS:
      motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
      motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
      motor_group = MotorGroup(motor_1, motor_2)
-     distance_sensor = Distance(Ports.PORT3)
+     Spinning: motor_group.spin(FORWARD) or motor_group.spin_for(FORWARD, distance, TURNS)
+     Stopping: motor_group.stop()
+     * CRITICAL: Always use 'FORWARD' or 'DirectionType.FORWARD'. NEVER use 'FWD', 'REV', or 'DirectionType.FWD'.
+   - 3-WIRE DIGITAL OUTPUT / LED:
      led_a = DigitalOut(brain.three_wire_port.a)
-   - "userProjectCode": Put ONLY the actual converted algorithmic pseudocode.
+     Turn ON: led_a.set(True)
+     Turn OFF: led_a.set(False)
+     * CRITICAL: NEVER use .high(), .low(), .on(), or .off(). Only use .set(True) or .set(False).
+   - DISTANCE SENSOR:
+     distance_sensor = Distance(Ports.PORT3)
+     Reading distance: distance_sensor.object_distance(DistanceUnits.CM) or distance_sensor.object_distance(DistanceUnits.MM)
+   - WAITS & DELAYS:
+     wait(0.5, SECONDS) or wait(500, MSEC)
+   - LOOPS:
+     For "Loop N times", use: for count in range(N):
+     For "While ...", use standard python: while distance_sensor.object_distance(DistanceUnits.CM) > 20:
 
-4. HANDWRITING & OCR RESILIENCE:
-   - Ignore crossed-out text or erased lines.
-   - Tolerant of OCR typos (e.g., interpret "White" as "While" if followed by a condition like '> 20cm').
+4. SEPARATION OF CONCERNS:
+   - "hardwareDeclarations": Put ONLY the Python object instantiations here (e.g., Motor, MotorGroup, DigitalOut, Distance).
+   - "userProjectCode": Put ONLY the converted sequential algorithmic logic here.
 
 OUTPUT FORMAT:
-Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
+Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose:
 {
   "passedGatekeeper": true,
   "rejectionReason": "",
@@ -942,8 +957,8 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
     "Motor group on ports 1+2 is never commanded to stop, so it will spin continuously."
   ],
   "rawTranscription": "Line-by-line transcription of the student paper...",
-  "robotConfigCode": "motor_1 = ...",
-  "userProjectCode": "distance = 3\\n..."
+  "hardwareDeclarations": "led_a = DigitalOut(brain.three_wire_port.a)\\nmotor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)\\nmotor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)\\nmotor_group = MotorGroup(motor_1, motor_2)\\ndistance_sensor = Distance(Ports.PORT3)",
+  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()"
 }
 `;
 
@@ -1032,7 +1047,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
         });
         rejectionCard.classList.remove('hidden');
       } else {
-        rawRobotConfigCode = res.robotConfigCode || '';
+        rawHardwareDeclarations = res.hardwareDeclarations || res.robotConfigCode || '';
         rawUserProjectCode = res.userProjectCode || res.vexPythonCode || '';
         transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
 
@@ -1072,7 +1087,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
     downloadCodeBtn.onclick = () => {
       const rawName = projectNameInput.value.trim();
 
-      // Enforce file naming requirement
       if (!rawName) {
         nameInputCard.classList.add('border-red-500', 'bg-red-950/20');
         projectNameInput.focus();
@@ -1083,7 +1097,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or text:
       const safeBaseName = rawName.replace(/\.v5python$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5python`;
 
-      // Package into VEXcode V5 JSON container
       const v5ProjectJson = generateV5PythonContainer(assembledPythonSource);
 
       const blob = new Blob([v5ProjectJson], { type: 'application/json' });
