@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VEXcode Pseudocode Hardware Gatekeeper</title>
   
-  <!-- Favicon referencing your uploaded SVG -->
-  <link rel="icon" type="image/svg+xml" href="./vexconverter.svg">
+  <!-- Walton Engineering Logo as Favicon -->
+  <link rel="icon" type="image/png" href="./WalEngLogo.png">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -22,11 +22,6 @@
     code, pre {
       font-family: 'Fira Code', monospace;
     }
-    
-    .walton-navy { background-color: #082A72; }
-    .walton-crimson { background-color: #BA0C1E; }
-    .text-walton-red { color: #E5132B; }
-    .border-walton-navy { border-color: #082A72; }
   </style>
 </head>
 <body class="text-slate-200 min-h-screen flex flex-col antialiased selection:bg-red-600 selection:text-white">
@@ -35,10 +30,10 @@
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <!-- SVG Badge with inline fallback in case file is loading -->
-        <div class="w-12 h-12 flex-shrink-0 rounded-lg p-0.5 flex items-center justify-center">
-          <img src="./vexconverter.svg" 
-               alt="Walton Python Badge" 
+        <!-- WalEngLogo Badge -->
+        <div class="w-12 h-12 flex-shrink-0 rounded-lg p-0.5 flex items-center justify-center bg-slate-800/60 border border-slate-700">
+          <img src="./WalEngLogo.png" 
+               alt="Walton Engineering Logo" 
                class="w-full h-full object-contain"
                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-10 h-10 rounded bg-[#082A72] border border-[#BA0C1E] flex items-center justify-center font-bold text-white text-lg\'>W</div>';">
         </div>
@@ -74,7 +69,7 @@
   <!-- ================= MAIN APP CONTAINER ================= -->
   <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
     
-    <!-- LEFT PANEL: Capture & Gatekeeper Rules (5 Columns) -->
+    <!-- LEFT PANEL: Ingestion & Gatekeeper Rules (5 Columns) -->
     <div class="lg:col-span-5 space-y-6">
       
       <!-- Gatekeeper Description Banner -->
@@ -89,7 +84,7 @@
           <div>
             <h2 class="text-sm font-bold text-white tracking-wide uppercase">Hardware Gatekeeper Criteria</h2>
             <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-              This engine enforces physical robotics constraints:
+              This engine enforces physical robotics requirements:
             </p>
             <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
               <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit brain port or 3-wire pin assignment are immediately rejected.</li>
@@ -152,34 +147,41 @@
         <div id="cameraModeContainer" class="hidden space-y-3">
           <div class="relative rounded-xl overflow-hidden bg-black border-2 border-slate-700 min-h-[240px] flex items-center justify-center">
             
-            <!-- Live Video Feed -->
-            <video id="webcamVideo" autoplay playsinline muted class="w-full h-auto max-h-[300px] object-cover"></video>
+            <!-- Live Video Element -->
+            <video id="webcamVideo" 
+                   autoplay 
+                   playsinline 
+                   muted 
+                   class="w-full h-auto min-h-[240px] max-h-[320px] bg-black object-contain"></video>
 
             <!-- Guide Target Box Overlay -->
-            <div class="absolute inset-4 border border-dashed border-amber-400/50 rounded-lg pointer-events-none flex items-center justify-center">
-              <span class="text-[11px] text-amber-300/80 bg-black/60 px-2 py-0.5 rounded backdrop-blur">
-                Align Pseudocode Here
+            <div class="absolute inset-4 border-2 border-dashed border-amber-400/60 rounded-lg pointer-events-none flex items-center justify-center">
+              <span class="text-[11px] text-amber-300 bg-black/70 px-2 py-0.5 rounded backdrop-blur">
+                Hold pseudocode steady within box
               </span>
             </div>
 
             <!-- Camera Switch Lens Button -->
             <button id="switchCameraBtn" 
+                    type="button"
                     title="Flip Camera Lens"
-                    class="absolute top-3 right-3 p-2 bg-slate-900/80 hover:bg-slate-800 text-white rounded-lg border border-slate-700 shadow backdrop-blur transition">
+                    class="absolute top-3 right-3 p-2 bg-slate-900/80 hover:bg-slate-800 text-white rounded-lg border border-slate-700 shadow backdrop-blur transition z-10">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
               </svg>
             </button>
           </div>
 
-          <!-- Capture Trigger Button -->
+          <!-- Capture Trigger Buttons -->
           <div class="flex gap-2">
             <button id="snapPhotoBtn" 
+                    type="button"
                     class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40">
               <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
               <span>Snap Photo</span>
             </button>
             <button id="cancelCameraBtn" 
+                    type="button"
                     class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
               Cancel
             </button>
@@ -225,7 +227,7 @@
       </div>
 
       <!-- REJECTION CARD: When Hardware Gatekeeper Fails -->
-      <div id="rejectionCard" class="hidden rounded-2xl border border-red-700 bg-red-950/40 p-6 shadow-2xl space-y-5 animate-fade-in">
+      <div id="rejectionCard" class="hidden rounded-2xl border border-red-700 bg-red-950/40 p-6 shadow-2xl space-y-5">
         <div class="flex items-start gap-4">
           <div class="w-12 h-12 rounded-xl bg-red-900/60 border border-red-600 flex items-center justify-center text-red-300 flex-shrink-0">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,14 +392,14 @@
 
   <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
-    // State management
+    // State variables
     let selectedImageBase64 = null;
     let selectedImageMime = 'image/jpeg';
     let currentVexCode = '';
     let cameraStream = null;
-    let currentFacingMode = 'environment'; // default to rear camera on mobile/tablet, falls back to webcam on laptops
+    let currentFacingMode = 'user'; // default to user webcam, flip to environment for rear cameras
 
-    // DOM Elements - Upload & Camera
+    // DOM Elements - Modes
     const modeUploadBtn = document.getElementById('modeUploadBtn');
     const modeCameraBtn = document.getElementById('modeCameraBtn');
     const uploadModeContainer = document.getElementById('uploadModeContainer');
@@ -407,6 +409,7 @@
     const switchCameraBtn = document.getElementById('switchCameraBtn');
     const cancelCameraBtn = document.getElementById('cancelCameraBtn');
 
+    // DOM Elements - Upload & Previews
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
     const dropzonePrompt = document.getElementById('dropzonePrompt');
@@ -419,7 +422,7 @@
     const statusBox = document.getElementById('statusBox');
     const statusMessage = document.getElementById('statusMessage');
 
-    // DOM Elements - Results
+    // DOM Elements - Output Cards
     const emptyState = document.getElementById('emptyState');
     const rejectionCard = document.getElementById('rejectionCard');
     const rejectionSummary = document.getElementById('rejectionSummary');
@@ -444,7 +447,7 @@
     const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
     const apiKeyStatusDot = document.getElementById('apiKeyStatusDot');
 
-    // API Key Storage Utilities
+    // API Key Storage
     function getStoredApiKey() {
       return localStorage.getItem('vex_gemini_api_key') || '';
     }
@@ -474,7 +477,7 @@
       const val = apiKeyInput.value.trim();
       if (val) {
         localStorage.setItem('vex_gemini_api_key', val);
-        localStorage.removeItem('vex_active_gemini_models_v2'); // Flush cache on new key
+        localStorage.removeItem('vex_active_gemini_models_v2');
       }
       updateApiKeyIndicator();
       apiKeyModal.classList.add('hidden');
@@ -497,7 +500,7 @@
       }
     };
 
-    // ================= WEBCAM & CAPTURE LOGIC =================
+    // ================= ROBUST WEBCAM STREAM & CAPTURE =================
     modeUploadBtn.onclick = () => {
       stopCameraStream();
       modeUploadBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition';
@@ -517,25 +520,54 @@
     async function startCameraStream() {
       stopCameraStream();
       try {
-        const constraints = {
-          video: {
-            facingMode: currentFacingMode,
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
+        let stream = null;
+        // Try ideal constraints first
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: currentFacingMode },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            },
+            audio: false
+          });
+        } catch (strictErr) {
+          console.warn('Standard resolution constraints failed, attempting fallback camera:', strictErr);
+          // Fallback to basic video stream for Chromebooks / basic webcams
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+
+        cameraStream = stream;
+        webcamVideo.srcObject = cameraStream;
+
+        // Ensure video element plays upon stream attachment
+        webcamVideo.onloadedmetadata = async () => {
+          try {
+            await webcamVideo.play();
+          } catch (e) {
+            console.error('Video play error on loadedmetadata:', e);
           }
         };
-        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-        webcamVideo.srcObject = cameraStream;
+
+        // Redundant direct play call to prevent black-screen pauses
+        try {
+          await webcamVideo.play();
+        } catch (e) {
+          // Handled via onloadedmetadata if metadata is still buffering
+        }
+
       } catch (err) {
-        console.error('Camera access error:', err);
-        alert('Could not start camera. Please verify camera permissions in your browser or try uploading a picture.');
+        console.error('Camera access rejected or unavailable:', err);
+        alert('Could not start webcam. Please verify camera permissions in your browser or use the "Upload File" tab.');
         modeUploadBtn.click();
       }
     }
 
     function stopCameraStream() {
       if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) {}
+        });
         cameraStream = null;
       }
       webcamVideo.srcObject = null;
@@ -543,7 +575,7 @@
 
     switchCameraBtn.onclick = async (e) => {
       e.stopPropagation();
-      currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
       await startCameraStream();
     };
 
@@ -552,19 +584,25 @@
     };
 
     snapPhotoBtn.onclick = () => {
-      if (!cameraStream || !webcamVideo.videoWidth) return;
+      if (!cameraStream) {
+        alert('Camera stream is not active. Please start camera first.');
+        return;
+      }
 
-      // Draw current video frame to an offscreen canvas
+      // Read dimensions safely, fallback to client dimensions if videoWidth is delayed
+      const width = webcamVideo.videoWidth || webcamVideo.clientWidth || 1280;
+      const height = webcamVideo.videoHeight || webcamVideo.clientHeight || 720;
+
       const canvas = document.createElement('canvas');
-      canvas.width = webcamVideo.videoWidth;
-      canvas.height = webcamVideo.videoHeight;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(webcamVideo, 0, 0, width, height);
 
-      // Process downscaled JPEG for OCR
+      // Downscale and pass into gatekeeper pipeline
       optimizeAndLoadFromCanvas(canvas, 'Webcam_Snap.jpg');
       
-      // Stop stream and switch to review view
+      // Stop webcam and return to preview
       stopCameraStream();
       modeUploadBtn.click();
     };
@@ -624,7 +662,7 @@
       reader.readAsDataURL(file);
     }
 
-    // Downscale and compress canvas to max 1600px at 0.85 JPEG quality
+    // Downscale canvas to max 1600px at 0.85 JPEG quality
     function optimizeAndLoadFromCanvas(sourceCanvas, label = 'Captured Image') {
       const maxDim = 1600;
       let width = sourceCanvas.width;
@@ -657,7 +695,7 @@
       convertBtn.disabled = false;
     }
 
-    // ================= DYNAMIC GEMINI DISCOVERY =================
+    // ================= DYNAMIC GEMINI MODEL DISCOVERY =================
     async function getDynamicFlashModels(apiKey) {
       const cacheKey = 'vex_active_gemini_models_v2';
       const cached = localStorage.getItem(cacheKey);
