@@ -483,7 +483,7 @@
     let autoSnapTimer = null;
     let prevFrameData = null;
     let steadyConsecutiveFrames = 0;
-    const REQUIRED_STEADY_FRAMES = 12; // ~1.2 seconds of holding steady
+    const REQUIRED_STEADY_FRAMES = 30; // 30 frames @ 100ms = 3.0 seconds
     let isAutoSnapping = false;
 
     // DOM Elements - Modes & Inputs
@@ -788,7 +788,7 @@
       progressRingContainer.classList.remove('hidden');
       progressRingCircle.setAttribute('stroke-dasharray', `${progressPercent}, 100`);
 
-      const remainingSeconds = Math.max(1, Math.ceil((100 - progressPercent) / 75));
+      const remainingSeconds = Math.max(1, Math.ceil(((100 - progressPercent) / 100) * 3));
       countdownNumber.textContent = remainingSeconds;
 
       if (isSteady) {
