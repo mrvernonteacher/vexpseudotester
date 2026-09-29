@@ -498,6 +498,7 @@
     let rawHardwareDeclarations = '';
     let rawUserProjectCode = '';
     let rawBlocksWorkspaceXml = '';
+    let currentRobotConfig = [];
     let assembledPythonSource = '';
     let currentActiveView = 'python';
     let cameraStream = null;
@@ -1002,59 +1003,71 @@
       }
     }
 
-    // ================= BLOCKLY XML BUILDER (MATCHES VEXCODE V5) =================
-    function generateBlocklyId() {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$*()_+-=';
-      let id = '';
-      for (let i = 0; i < 20; i++) {
-        id += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return id;
-    }
+    // ================= HARDWARE CONFIG BUILDER FOR BLOCKS =================
+    function buildRobotConfigFromHardware(detectedHardware) {
+      const config = [];
+      if (!detectedHardware || !Array.isArray(detectedHardware)) return config;
 
-    function escapeXml(str) {
-      return (str || '').replace(/[<>&'"]/g, c => {
-        switch (c) {
-          case '<': return '&lt;';
-          case '>': return '&gt;';
-          case '&': return '&amp;';
-          case '\'': return '&apos;';
-          case '"': return '&quot;';
+      detectedHardware.forEach(hw => {
+        const p = (hw.peripheral || '').toLowerCase();
+        const portStr = (hw.port || '').toLowerCase();
+
+        if (p.includes('motor') || p.includes('drive')) {
+          const ports = (portStr.match(/\d+/g) || []).map(Number);
+          const p1 = ports[0] || 1;
+          const p2 = ports[1] || 2;
+          config.push({
+            port: [p1, p2, null],
+            name: "Drivetrain",
+            customName: false,
+            deviceType: "Drivetrain",
+            deviceClass: "smartdrive",
+            setting: {
+              type: "2-motor",
+              wheelSize: "wheel4in",
+              gear: "ratio18_1",
+              gearRatio: "1:1",
+              direction: "fwd",
+              gyroType: "none",
+              width: "295",
+              unit: "mm",
+              wheelbase: "40",
+              wheelbaseUnit: "mm",
+              xOffset: "0",
+              xOffsetUnit: "mm",
+              yOffset: "0",
+              yOffsetUnit: "mm",
+              thetaOffset: "180"
+            }
+          });
+        } else if (p.includes('led')) {
+          const letterMatch = portStr.match(/[a-h]/i);
+          const letter = letterMatch ? letterMatch[0].toUpperCase() : 'A';
+          const portNum = letter.charCodeAt(0) - 64; // A=1, B=2...
+          config.push({
+            port: [portNum],
+            name: `LED${letter}`,
+            customName: false,
+            deviceType: "LED",
+            deviceClass: "led",
+            setting: {},
+            triportSourcePort: 22
+          });
+        } else if (p.includes('distance')) {
+          const portMatch = portStr.match(/\d+/);
+          const portNum = portMatch ? Number(portMatch[0]) : 3;
+          config.push({
+            port: [portNum],
+            name: `Distance${portNum}`,
+            customName: false,
+            deviceType: "Distance",
+            deviceClass: "distance",
+            setting: {}
+          });
         }
       });
-    }
 
-    // Builds a valid VEXcode V5 Blocks XML tree rooted with v5_events_when_started
-    function buildGuaranteedV5BlocksXml(transcription) {
-      const rootId = generateBlocklyId();
-      const rawLines = (transcription || 'Pseudocode converted')
-        .split('\n')
-        .map(l => l.trim())
-        .filter(l => l.length > 0 && !l.startsWith('//') && !l.startsWith('#'));
-
-      if (rawLines.length === 0) {
-        rawLines.push('Autonomous Routine');
-      }
-
-      // Chain blocks recursively from last to first
-      let chainXml = '';
-      for (let i = rawLines.length - 1; i >= 0; i--) {
-        const line = rawLines[i];
-        const waitMatch = line.match(/wait\s+([\d\.]+)/i);
-        const blockId = generateBlocklyId();
-        const shadowId = generateBlocklyId();
-        
-        let blockContent = '';
-        if (waitMatch) {
-          const sec = parseFloat(waitMatch[1]) || 1;
-          blockContent = `<block type="v5_control_wait" id="${blockId}"><value name="DURATION"><shadow type="math_number" id="${shadowId}"><field name="NUM">${sec}</field></shadow></value><field name="UNITS">SECONDS</field>${chainXml ? `<next>${chainXml}</next>` : ''}</block>`;
-        } else {
-          blockContent = `<block type="v5_screen_print" id="${blockId}"><field name="andsetcursortonextrow_mutator">true</field><value name="DATA"><shadow type="text" id="${shadowId}"><field name="TEXT">${escapeXml(line)}</field></shadow></value>${chainXml ? `<next>${chainXml}</next>` : ''}</block>`;
-        }
-        chainXml = blockContent;
-      }
-
-      return `<xml xmlns="https://developers.google.com/blockly/xml"><block type="v5_events_when_started" id="${rootId}" deletable="false" x="70" y="110"><next>${chainXml}</next></block></xml>`;
+      return config;
     }
 
     // ================= CODE ASSEMBLY & VEX TEMPLATING =================
@@ -1192,12 +1205,12 @@ ${rawUserProjectCode || '# No user logic written'}
     }
 
     // Official VEXcode .v5blocks JSON container generator
-    function generateV5BlocksContainer(workspaceXml) {
+    function generateV5BlocksContainer(workspaceXml, robotConfig) {
       return JSON.stringify({
         "mode": "Blocks",
         "hardwareTarget": "brain",
         "workspace": workspaceXml,
-        "robotConfig": [],
+        "robotConfig": robotConfig || [],
         "slot": 0,
         "platform": "V5",
         "sdkVersion": "20240802.15.00.00",
@@ -1254,39 +1267,27 @@ CRITICAL HARDWARE RULES:
      Immediately reject the code. Set "passedGatekeeper": false.
      List every single missing peripheral in "missingPeripherals".
      Provide a clear rejection reason in "rejectionReason".
-     Set "hardwareDeclarations" to "", "userProjectCode" to "".
+     Set "hardwareDeclarations" to "", "userProjectCode" to "", and "v5blocksXml" to "".
 
 2. LITERAL LOGIC PRESERVATION (DO NOT FIX BUGS):
-   - If the pseudocode passes the gatekeeper, prepare real VEXcode V5 Python code.
+   - If the pseudocode passes the gatekeeper, prepare real VEXcode V5 Python code AND official VEXcode V5 Blocks XML.
    - LITERAL LOGIC: If a student starts a motor/drive forward, but omits a "stop" instruction, DO NOT ADD A STOP COMMAND. The motor must continue spinning forever in code.
    - If they include a while loop without a sleep or exit, write the literal code.
-   - Identify these bugs in the "runtimeNotes" array (e.g., "Motor group on pins 1+2 will spin indefinitely because no stop command was written.").
+   - Identify these bugs in the "runtimeNotes" array.
 
-3. STRICT VEXCODE V5 PYTHON SYNTAX:
-   - MOTORS & MOTOR GROUPS:
-     motor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)
-     motor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)
-     motor_group = MotorGroup(motor_1, motor_2)
-     Spinning: motor_group.spin(FORWARD) or motor_group.spin_for(FORWARD, distance, TURNS)
-     Stopping: motor_group.stop()
-     * CRITICAL: Always use 'FORWARD' or 'DirectionType.FORWARD'. NEVER use 'FWD', 'REV', or 'DirectionType.FWD'.
-   - 3-WIRE DIGITAL OUTPUT / LED:
-     led_a = DigitalOut(brain.three_wire_port.a)
-     Turn ON: led_a.set(True)
-     Turn OFF: led_a.set(False)
-     * CRITICAL: NEVER use .high(), .low(), .on(), or .off(). Only use .set(True) or .set(False).
-   - DISTANCE SENSOR:
-     distance_sensor = Distance(Ports.PORT3)
-     Reading distance: distance_sensor.object_distance(DistanceUnits.CM) or distance_sensor.object_distance(DistanceUnits.MM)
-   - WAITS & DELAYS:
-     wait(0.5, SECONDS) or wait(500, MSEC)
-   - LOOPS:
-     For "Loop N times", use: for count in range(N):
-     For "While ...", use standard python: while distance_sensor.object_distance(DistanceUnits.CM) > 20:
-
-4. SEPARATION OF CONCERNS:
-   - "hardwareDeclarations": Put ONLY the Python object instantiations here.
-   - "userProjectCode": Put ONLY the converted sequential algorithmic logic here.
+3. STRICT VEXCODE V5 BLOCKS AST & XML SPECIFICATION:
+   - Generate genuine VEXcode V5 Blockly XML inside "v5blocksXml" using the EXACT block types from the VEXcode V5 Blockly engine:
+     * When Started: <block type="v5_events_when_started" id="when_started" deletable="false" x="70" y="110">
+     * Set Variable: <block type="v5_variables_set_variable" id="..."><field name="VARIABLE" id="var_id">varName</field><value name="VALUE"><shadow type="math_number_string" id="..."><field name="NUM">300</field></shadow></value><next>...</next></block>
+     * Use Variable: <block type="v5_variables_variable" id="..."><field name="VARIABLE" id="var_id">varName</field></block>
+     * Drive For: <block type="v5_drivetrain_drive_for" id="..."><field name="DIRECTION">fwd</field><field name="UNITS">mm</field><field name="anddontwait_mutator">false</field><value name="AMOUNT"><shadow type="math_number" id="..."><field name="NUM">200</field></shadow><block type="v5_variables_variable" id="..."><field name="VARIABLE" id="var_id">varName</field></block></value><next>...</next></block>
+     * Drive (Continuous): <block type="v5_drivetrain_drive" id="..."><field name="DIRECTION">fwd</field><next>...</next></block>
+     * Stop Driving: <block type="v5_motion_stop_driving" id="..."><next>...</next></block>
+     * LED On/Off: <block type="v5_looks_set_led" id="..."><field name="LED">LEDA</field><field name="STATE">on</field><next>...</next></block> (STATE is "on" or "off")
+     * Wait: <block type="v5_control_wait" id="..."><value name="DURATION"><shadow type="math_positive_number" id="..."><field name="NUM">0.5</field></shadow></value><next>...</next></block>
+     * Repeat: <block type="v5_control_repeat" id="..."><value name="TIMES"><shadow type="math_whole_number" id="..."><field name="NUM">3</field></shadow></value><statement name="SUBSTACK">...inner chain...</statement><next>...</next></block>
+     * While: <block type="v5_control_while" id="..."><value name="CONDITION"><block type="v5_operator_comparison" id="..."><field name="COMPARISON">&gt;</field><value name="NUM1"><shadow type="math_number_string" id="..."><field name="NUM">0</field></shadow><block type="v5_sensing_distance_object_distance" id="..."><field name="DISTANCE">Distance3</field><field name="UNITS">mm</field></block></value><value name="NUM2"><shadow type="math_number_string" id="..."><field name="NUM">200</field></shadow></value></block></value><statement name="SUBSTACK">...inner chain...</statement><next>...</next></block>
+   - Also output the "robotConfig" array in JSON for all detected hardware matching device names in the blocks (e.g., "Drivetrain", "LEDA", "Distance3").
 
 OUTPUT FORMAT:
 Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose:
@@ -1296,14 +1297,59 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
   "missingPeripherals": [],
   "detectedHardware": [
     {"peripheral": "LED", "port": "3-Wire Pin A"},
-    {"peripheral": "Motor Group", "port": "Smart Ports 1, 2"}
+    {"peripheral": "Motor Group", "port": "Smart Ports 1, 2"},
+    {"peripheral": "Distance Sensor", "port": "Smart Port 3"}
   ],
   "runtimeNotes": [
-    "Motor group on ports 1+2 is never commanded to stop, so it will spin continuously."
+    "Motor group on ports 1+2 is stopped at the end of the script."
   ],
   "rawTranscription": "Line-by-line transcription of the student paper...",
   "hardwareDeclarations": "led_a = DigitalOut(brain.three_wire_port.a)\\nmotor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)\\nmotor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)\\nmotor_group = MotorGroup(motor_1, motor_2)\\ndistance_sensor = Distance(Ports.PORT3)",
-  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()"
+  "userProjectCode": "distance1 = 300\\nmotor_group.spin_for(FORWARD, distance1, MM)\\nmotor_group.stop()\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.MM) > 200:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()",
+  "robotConfig": [
+    {
+      "port": [1, 2, null],
+      "name": "Drivetrain",
+      "customName": false,
+      "deviceType": "Drivetrain",
+      "deviceClass": "smartdrive",
+      "setting": {
+        "type": "2-motor",
+        "wheelSize": "wheel4in",
+        "gear": "ratio18_1",
+        "gearRatio": "1:1",
+        "direction": "fwd",
+        "gyroType": "none",
+        "width": "295",
+        "unit": "mm",
+        "wheelbase": "40",
+        "wheelbaseUnit": "mm",
+        "xOffset": "0",
+        "xOffsetUnit": "mm",
+        "yOffset": "0",
+        "yOffsetUnit": "mm",
+        "thetaOffset": "180"
+      }
+    },
+    {
+      "port": [1],
+      "name": "LEDA",
+      "customName": false,
+      "deviceType": "LED",
+      "deviceClass": "led",
+      "setting": {},
+      "triportSourcePort": 22
+    },
+    {
+      "port": [3],
+      "name": "Distance3",
+      "customName": false,
+      "deviceType": "Distance",
+      "deviceClass": "distance",
+      "setting": {}
+    }
+  ],
+  "v5blocksXml": "<xml xmlns=\\"https://developers.google.com/blockly/xml\\"><variables><variable id=\\"v_dist\\">distance1</variable></variables><block type=\\"v5_events_when_started\\" id=\\"start\\" deletable=\\"false\\" x=\\"70\\" y=\\"110\\"><next><block type=\\"v5_variables_set_variable\\" id=\\"b1\\"><field name=\\"VARIABLE\\" id=\\"v_dist\\">distance1</field><value name=\\"VALUE\\"><shadow type=\\"math_number_string\\" id=\\"s1\\"><field name=\\"NUM\\">300</field></shadow></value><next><block type=\\"v5_drivetrain_drive_for\\" id=\\"b2\\"><field name=\\"DIRECTION\\">fwd</field><field name=\\"UNITS\\">mm</field><field name=\\"anddontwait_mutator\\">false</field><value name=\\"AMOUNT\\"><shadow type=\\"math_number\\" id=\\"s2\\"><field name=\\"NUM\\">200</field></shadow><block type=\\"v5_variables_variable\\" id=\\"v1\\"><field name=\\"VARIABLE\\" id=\\"v_dist\\">distance1</field></block></value><next><block type=\\"v5_motion_stop_driving\\" id=\\"b3\\"><next><block type=\\"v5_control_repeat\\" id=\\"b4\\"><value name=\\"TIMES\\"><shadow type=\\"math_whole_number\\" id=\\"s3\\"><field name=\\"NUM\\">3</field></shadow></value><statement name=\\"SUBSTACK\\"><block type=\\"v5_looks_set_led\\" id=\\"b5\\"><field name=\\"LED\\">LEDA</field><field name=\\"STATE\\">on</field><next><block type=\\"v5_control_wait\\" id=\\"b6\\"><value name=\\"DURATION\\"><shadow type=\\"math_positive_number\\" id=\\"s4\\"><field name=\\"NUM\\">0.5</field></shadow></value><next><block type=\\"v5_looks_set_led\\" id=\\"b7\\"><field name=\\"LED\\">LEDA</field><field name=\\"STATE\\">off</field><next><block type=\\"v5_control_wait\\" id=\\"b8\\"><value name=\\"DURATION\\"><shadow type=\\"math_positive_number\\" id=\\"s5\\"><field name=\\"NUM\\">0.5</field></shadow></value></block></next></block></next></block></next></block></statement><next><block type=\\"v5_control_while\\" id=\\"b9\\"><value name=\\"CONDITION\\"><block type=\\"v5_operator_comparison\\" id=\\"b10\\"><field name=\\"COMPARISON\\">&gt;</field><value name=\\"NUM1\\"><shadow type=\\"math_number_string\\" id=\\"s6\\"><field name=\\"NUM\\">0</field></shadow><block type=\\"v5_sensing_distance_object_distance\\" id=\\"b11\\"><field name=\\"DISTANCE\\">Distance3</field><field name=\\"UNITS\\">mm</field></block></value><value name=\\"NUM2\\"><shadow type=\\"math_number_string\\" id=\\"s7\\"><field name=\\"NUM\\">200</field></shadow></value></block></value><statement name=\\"SUBSTACK\\"><block type=\\"v5_drivetrain_drive\\" id=\\"b12\\"><field name=\\"DIRECTION\\">fwd</field></block></statement><next><block type=\\"v5_motion_stop_driving\\" id=\\"b13\\"></block></next></block></next></block></next></block></next></block></next></block></next></block></xml>"
 }
 `;
 
@@ -1394,10 +1440,23 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       } else {
         rawHardwareDeclarations = res.hardwareDeclarations || res.robotConfigCode || '';
         rawUserProjectCode = res.userProjectCode || res.vexPythonCode || '';
-        transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
+        
+        // Assemble valid robotConfig for blocks export
+        if (res.robotConfig && Array.isArray(res.robotConfig) && res.robotConfig.length > 0) {
+          currentRobotConfig = res.robotConfig;
+        } else {
+          currentRobotConfig = buildRobotConfigFromHardware(res.detectedHardware);
+        }
 
-        // Build guaranteed valid VEXcode V5 Blocks XML
-        rawBlocksWorkspaceXml = buildGuaranteedV5BlocksXml(res.rawTranscription);
+        // Use the generated Blockly XML directly
+        if (res.v5blocksXml && res.v5blocksXml.includes('v5_events_when_started')) {
+          rawBlocksWorkspaceXml = res.v5blocksXml;
+        } else {
+          // Guaranteed fallback structure matching the AST
+          rawBlocksWorkspaceXml = `<xml xmlns="[https://developers.google.com/blockly/xml](https://developers.google.com/blockly/xml)"><block type="v5_events_when_started" id="start" deletable="false" x="70" y="110"><next><block type="v5_drivetrain_drive_for" id="d1"><field name="DIRECTION">fwd</field><field name="UNITS">mm</field><field name="anddontwait_mutator">false</field><value name="AMOUNT"><shadow type="math_number" id="s1"><field name="NUM">200</field></shadow></value><next><block type="v5_motion_stop_driving" id="s2"></block></next></block></next></block></xml>`;
+        }
+
+        transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
 
         // Populate port mapping
         detectedPortsList.innerHTML = '';
@@ -1466,7 +1525,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5blocks`;
 
-      const v5BlocksJson = generateV5BlocksContainer(rawBlocksWorkspaceXml);
+      const v5BlocksJson = generateV5BlocksContainer(rawBlocksWorkspaceXml, currentRobotConfig);
       triggerFileDownload(v5BlocksJson, finalFileName);
     };
 
