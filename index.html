@@ -51,7 +51,7 @@
             <h1 class="font-bold text-lg text-white leading-tight">VEXcode Hardware Gatekeeper</h1>
             <span class="text-xs bg-red-950/80 border border-red-700/60 text-red-300 font-semibold px-2 py-0.5 rounded-full">V5 Strict</span>
           </div>
-          <p class="text-xs text-slate-400">Autonomous Pseudocode &rarr; VEXcode V5 Python Validation Engine</p>
+          <p class="text-xs text-slate-400">Autonomous Pseudocode &rarr; VEXcode V5 Python & Blocks Validation Engine</p>
         </div>
       </div>
 
@@ -98,7 +98,7 @@
             <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
               <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit brain port or 3-wire pin assignment are immediately rejected.</li>
               <li><strong class="text-amber-400">Literal Logic Execution:</strong> If a motor is commanded to start but never stopped, it will spin indefinitely in the generated code.</li>
-              <li><strong class="text-blue-400">VEXcode V5 Container:</strong> Code exports directly to native <code class="text-blue-300">.v5python</code> project files[cite: 5].</li>
+              <li><strong class="text-emerald-400">Dual VEXcode Containers:</strong> Export directly to native <code class="text-blue-300">.v5python</code> or <code class="text-emerald-300">.v5blocks</code> project files.</li>
             </ul>
           </div>
         </div>
@@ -260,7 +260,7 @@
 
     </div>
 
-    <!-- RIGHT PANEL: Gatekeeper Results / VEX Python Code (7 Columns) -->
+    <!-- RIGHT PANEL: Gatekeeper Results / VEX Python & Blocks Code (7 Columns) -->
     <div class="lg:col-span-7 flex flex-col space-y-6">
 
       <!-- Placeholder State (Before Execution) -->
@@ -272,7 +272,7 @@
         </div>
         <p class="text-sm font-medium text-slate-300">Ready for Hardware Verification</p>
         <p class="text-xs max-w-sm text-slate-500 leading-relaxed">
-          Hold pseudocode steady up to your camera for auto-capture, or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python code.
+          Hold pseudocode steady up to your camera for auto-capture, or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python & Blocks project files.
         </p>
       </div>
 
@@ -315,17 +315,17 @@
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex-1 w-full">
               <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-300 flex items-center gap-1.5">
-                <span>Output File Name</span>
+                <span>Output Project Name</span>
                 <span class="text-red-400 font-bold">* (Required to Download)</span>
               </label>
               <div class="relative flex items-center">
                 <input type="text" 
                        id="projectNameInput" 
                        placeholder="e.g. Autonomous_Challenge_1" 
-                       class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none transition pr-24">
-                <span class="absolute right-3 text-xs font-mono text-blue-400 pointer-events-none font-bold">.v5python</span>
+                       class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none transition pr-36">
+                <span class="absolute right-3 text-[11px] font-mono text-emerald-400 pointer-events-none font-bold">.v5python / .v5blocks</span>
               </div>
-              <p id="fileNameHelp" class="text-[11px] text-slate-500 mt-1">Naming your file embeds project metadata into VEXcode V5.</p>
+              <p id="fileNameHelp" class="text-[11px] text-slate-500 mt-1">Naming your project formats both your Python and Blocks export files.</p>
             </div>
 
             <div class="w-full sm:w-48 flex-shrink-0">
@@ -365,34 +365,56 @@
 
         </div>
 
-        <!-- Code Block Viewer -->
+        <!-- Code & Blocks Viewer Card -->
         <div class="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+          
+          <!-- Viewer Tab Bar & Action Controls -->
+          <div class="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Left Tabs: Python vs Blocks XML -->
             <div class="flex items-center gap-2">
-              <div class="flex gap-1.5">
-                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                <div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-                <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+              <div class="flex gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button id="viewPythonTabBtn" class="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition flex items-center gap-1.5">
+                  <span>🐍 Python</span>
+                </button>
+                <button id="viewBlocksTabBtn" class="px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                  <span>🧱 Blocks XML</span>
+                </button>
               </div>
-              <span id="editorFileNameDisplay" class="text-xs font-mono text-slate-300 ml-2 font-semibold">project.v5python</span>
+              <span id="editorFileNameDisplay" class="text-xs font-mono text-slate-400 ml-1 font-semibold hidden sm:inline">project.v5python</span>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Right Buttons: Copy & Dual Export Options -->
+            <div class="flex flex-wrap items-center gap-2">
+              
               <button id="copyCodeBtn" 
-                      class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+                      class="px-2.5 py-1.5 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                 </svg>
                 <span id="copyBtnText">Copy Python</span>
               </button>
 
+              <!-- Download .v5python Button -->
               <button id="downloadCodeBtn" 
+                      title="Download text python project for VEXcode V5"
                       class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-700 hover:bg-blue-600 text-white shadow-md flex items-center gap-1.5 transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
-                <span>Download .v5python</span>
+                <span>.v5python</span>
               </button>
+
+              <!-- Download .v5blocks Button -->
+              <button id="downloadBlocksBtn" 
+                      title="Download graphical scratch blocks project for VEXcode V5"
+                      class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <span>.v5blocks</span>
+              </button>
+
             </div>
           </div>
 
@@ -475,7 +497,9 @@
     let selectedImageMime = 'image/jpeg';
     let rawHardwareDeclarations = '';
     let rawUserProjectCode = '';
+    let rawBlocksWorkspaceXml = '';
     let assembledPythonSource = '';
+    let currentActiveView = 'python'; // 'python' or 'blocks'
     let cameraStream = null;
     let currentFacingMode = 'user';
 
@@ -526,9 +550,14 @@
     const runtimeNotesList = document.getElementById('runtimeNotesList');
     const codeOutput = document.getElementById('codeOutput');
     const transcriptionOutput = document.getElementById('transcriptionOutput');
+    
+    // Viewer Tabs & Downloads
+    const viewPythonTabBtn = document.getElementById('viewPythonTabBtn');
+    const viewBlocksTabBtn = document.getElementById('viewBlocksTabBtn');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
     const copyBtnText = document.getElementById('copyBtnText');
     const downloadCodeBtn = document.getElementById('downloadCodeBtn');
+    const downloadBlocksBtn = document.getElementById('downloadBlocksBtn');
 
     const nameInputCard = document.getElementById('nameInputCard');
     const projectNameInput = document.getElementById('projectNameInput');
@@ -696,7 +725,6 @@
       modeUploadBtn.click();
     };
 
-    // Client-side Vision Heuristic for Document Presence & Motion Stability
     function startAutoSnapDetectionLoop() {
       if (autoSnapTimer) clearInterval(autoSnapTimer);
 
@@ -713,7 +741,6 @@
         if (!autoSnapToggle.checked || isAutoSnapping) return;
         if (!webcamVideo.videoWidth || webcamVideo.readyState < 2) return;
 
-        // Sample center 70% of the video frame
         const sx = webcamVideo.videoWidth * 0.15;
         const sy = webcamVideo.videoHeight * 0.15;
         const sWidth = webcamVideo.videoWidth * 0.7;
@@ -734,7 +761,6 @@
 
         const avgLuma = totalLuma / pixelCount;
 
-        // Calculate variance (contrast of ink text on paper)
         let varianceSum = 0;
         for (let j = 0; j < pixelCount; j++) {
           const diff = lumaValues[j] - avgLuma;
@@ -742,7 +768,6 @@
         }
         const variance = varianceSum / pixelCount;
 
-        // Calculate motion delta against previous frame
         let motionDelta = 999;
         if (prevFrameData) {
           let deltaSum = 0;
@@ -753,10 +778,6 @@
         }
         prevFrameData = lumaValues;
 
-        // Criteria:
-        // 1. avgLuma > 75 (paper reflection)
-        // 2. variance > 220 (text presence / contrast)
-        // 3. motionDelta < 7.5 (student is holding steady)
         const isPaperPresent = avgLuma > 75 && variance > 220;
         const isSteady = motionDelta < 7.5;
 
@@ -809,7 +830,6 @@
     }
 
     function triggerAutoCapture() {
-      // Shutter flash effect
       shutterFlash.classList.add('shutter-flash');
       setTimeout(() => {
         shutterFlash.classList.remove('shutter-flash');
@@ -982,13 +1002,36 @@
       }
     }
 
+    // ================= FALLBACK BLOCKLY XML BUILDER =================
+    // Builds a valid VEXcode V5 Blocks XML tree if model returns plain text
+    function buildFallbackBlocksXml(transcription, detectedHardware) {
+      const lines = (transcription || '')
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0 && !l.startsWith('//') && !l.startsWith('#'));
+
+      let innerBlocks = '';
+      let closingTags = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        const cleanLine = lines[i].replace(/[<>&'"]/g, '');
+        innerBlocks += `<next><block type="comment"><field name="COMMENT">${cleanLine}</field>`;
+        closingTags += `</block></next>`;
+      }
+
+      return `<xml xmlns="http://www.w3.org/1999/xhtml">
+  <block type="when_started" id="when_started" x="25" y="25">
+    ${innerBlocks}
+    ${closingTags}
+  </block>
+</xml>`;
+    }
+
     // ================= CODE ASSEMBLY & VEX TEMPLATING =================
     function rebuildPythonSource() {
       const projName = (projectNameInput.value.trim() || 'VEXcode_Project').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const author = authorNameInput.value.trim() || 'Walton Robotics Student';
       const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-
-      editorFileNameDisplay.textContent = `${projName}.v5python`;
 
       assembledPythonSource = 
 `#region VEXcode Generated Robot Configuration
@@ -1046,8 +1089,36 @@ ${rawHardwareDeclarations || '# No hardware peripherals configured'}
 ${rawUserProjectCode || '# No user logic written'}
 `;
 
-      codeOutput.textContent = assembledPythonSource;
+      updateViewerContent();
     }
+
+    function updateViewerContent() {
+      const projName = (projectNameInput.value.trim() || 'VEXcode_Project').replace(/[^a-zA-Z0-9_\-]/g, '_');
+      
+      if (currentActiveView === 'python') {
+        editorFileNameDisplay.textContent = `${projName}.v5python`;
+        codeOutput.textContent = assembledPythonSource;
+        copyBtnText.textContent = 'Copy Python';
+      } else {
+        editorFileNameDisplay.textContent = `${projName}.v5blocks (workspace.xml)`;
+        codeOutput.textContent = rawBlocksWorkspaceXml;
+        copyBtnText.textContent = 'Copy Blocks XML';
+      }
+    }
+
+    viewPythonTabBtn.onclick = () => {
+      currentActiveView = 'python';
+      viewPythonTabBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md bg-blue-600 text-white transition flex items-center gap-1.5';
+      viewBlocksTabBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      updateViewerContent();
+    };
+
+    viewBlocksTabBtn.onclick = () => {
+      currentActiveView = 'blocks';
+      viewBlocksTabBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-600 text-white transition flex items-center gap-1.5';
+      viewPythonTabBtn.className = 'px-2.5 py-1 text-xs font-medium rounded-md text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      updateViewerContent();
+    };
 
     projectNameInput.oninput = () => {
       nameInputCard.classList.remove('border-red-500', 'bg-red-950/20');
@@ -1058,6 +1129,7 @@ ${rawUserProjectCode || '# No user logic written'}
       rebuildPythonSource();
     };
 
+    // Official VEXcode .v5python JSON container generator
     function generateV5PythonContainer(pythonText) {
       return JSON.stringify({
         "mode": "Text",
@@ -1089,6 +1161,40 @@ ${rawUserProjectCode || '# No user logic written'}
       }, null, 2);
     }
 
+    // Official VEXcode .v5blocks JSON container generator
+    function generateV5BlocksContainer(workspaceXml, pythonText) {
+      return JSON.stringify({
+        "mode": "Blocks",
+        "hardwareTarget": "brain",
+        "textContent": pythonText || "",
+        "textLanguage": "python",
+        "robotConfig": [],
+        "slot": 0,
+        "platform": "V5",
+        "sdkVersion": "20240802.15.00.00",
+        "appVersion": "4.68.0",
+        "fileFormat": "2.0.0",
+        "targetBrainGen": "First",
+        "v5Sounds": [
+          {
+            "name": "game over",
+            "url": "static/sounds/mixkit-arcade-retro-game-over-213.wav"
+          }
+        ],
+        "v5SoundsEnabled": false,
+        "aiVisionSettings": {
+          "colors": [],
+          "codes": [],
+          "tags": true,
+          "AIObjects": true,
+          "AIObjectModel": [],
+          "aiModelDropDownValue": null
+        },
+        "workspace": workspaceXml,
+        "blocklyWorkspace": workspaceXml
+      }, null, 2);
+    }
+
     // ================= CONVERSION ENGINE =================
     convertBtn.onclick = async () => {
       const apiKey = getStoredApiKey();
@@ -1108,7 +1214,7 @@ ${rawUserProjectCode || '# No user logic written'}
         const models = await getDynamicFlashModels(apiKey);
 
         const promptText = `
-You are the strict Hardware Validator and VEXcode V5 Python Code Generator for high school robotics students.
+You are the strict Hardware Validator and VEXcode V5 Python and Blocks Generator for high school robotics students.
 Analyze the handwritten or printed pseudocode image provided.
 
 CRITICAL HARDWARE RULES:
@@ -1119,7 +1225,7 @@ CRITICAL HARDWARE RULES:
      Immediately reject the code. Set "passedGatekeeper": false.
      List every single missing peripheral in "missingPeripherals".
      Provide a clear rejection reason in "rejectionReason".
-     Set "hardwareDeclarations" to "" and "userProjectCode" to "".
+     Set "hardwareDeclarations" to "", "userProjectCode" to "", and "v5blocksXml" to "".
 
 2. LITERAL LOGIC PRESERVATION (DO NOT FIX BUGS):
    - If the pseudocode passes the gatekeeper, prepare real VEXcode V5 Python code.
@@ -1149,9 +1255,14 @@ CRITICAL HARDWARE RULES:
      For "Loop N times", use: for count in range(N):
      For "While ...", use standard python: while distance_sensor.object_distance(DistanceUnits.CM) > 20:
 
-4. SEPARATION OF CONCERNS:
-   - "hardwareDeclarations": Put ONLY the Python object instantiations here.
-   - "userProjectCode": Put ONLY the converted sequential algorithmic logic here.
+4. VEXCODE V5 BLOCKS WORKSPACE GENERATION:
+   - Generate valid Blockly XML for VEXcode V5 inside "v5blocksXml".
+   - Root must be: <block type="when_started" id="when_started" x="25" y="25">
+   - Sequence statements inside <next> tags.
+   - Include standard blocks for waits, repeats, and comment/action blocks for robot commands:
+     * wait: <block type="control_wait"><value name="DURATION"><shadow type="math_number"><field name="NUM">0.5</field></shadow></value><field name="UNITS">SECONDS</field><next>...</next></block>
+     * repeat: <block type="control_repeat"><value name="TIMES"><shadow type="math_whole_number"><field name="NUM">3</field></shadow></value><statement name="SUBSTACK">...</statement><next>...</next></block>
+     * other actions/steps as comment blocks: <block type="comment"><field name="COMMENT">Spin motor_group forward</field><next>...</next></block>
 
 OUTPUT FORMAT:
 Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose:
@@ -1168,7 +1279,8 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
   ],
   "rawTranscription": "Line-by-line transcription of the student paper...",
   "hardwareDeclarations": "led_a = DigitalOut(brain.three_wire_port.a)\\nmotor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)\\nmotor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)\\nmotor_group = MotorGroup(motor_1, motor_2)\\ndistance_sensor = Distance(Ports.PORT3)",
-  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()"
+  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()",
+  "v5blocksXml": "<xml xmlns=\\"http://www.w3.org/1999/xhtml\\"><block type=\\"when_started\\" id=\\"when_started\\" x=\\"25\\" y=\\"25\\"><next><block type=\\"comment\\"><field name=\\"COMMENT\\">Drive forward for distance</field></block></next></block></xml>"
 }
 `;
 
@@ -1259,6 +1371,12 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       } else {
         rawHardwareDeclarations = res.hardwareDeclarations || res.robotConfigCode || '';
         rawUserProjectCode = res.userProjectCode || res.vexPythonCode || '';
+        
+        // Use AI XML or build guaranteed fallback XML
+        rawBlocksWorkspaceXml = (res.v5blocksXml && res.v5blocksXml.includes('when_started'))
+          ? res.v5blocksXml
+          : buildFallbackBlocksXml(res.rawTranscription, res.detectedHardware);
+
         transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
 
         // Populate port mapping
@@ -1284,40 +1402,65 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       }
     }
 
-    // Code copy and download utilities
+    // Copy Utility (copies Python or Blocks XML depending on active tab)
     copyCodeBtn.onclick = () => {
-      if (!assembledPythonSource) return;
-      navigator.clipboard.writeText(assembledPythonSource).then(() => {
+      const contentToCopy = currentActiveView === 'python' ? assembledPythonSource : rawBlocksWorkspaceXml;
+      if (!contentToCopy) return;
+
+      navigator.clipboard.writeText(contentToCopy).then(() => {
+        const oldText = copyBtnText.textContent;
         copyBtnText.textContent = 'Copied!';
-        setTimeout(() => copyBtnText.textContent = 'Copy Python', 2000);
+        setTimeout(() => copyBtnText.textContent = oldText, 2000);
       });
     };
 
+    // Download .v5python Project File
     downloadCodeBtn.onclick = () => {
       const rawName = projectNameInput.value.trim();
 
       if (!rawName) {
         nameInputCard.classList.add('border-red-500', 'bg-red-950/20');
         projectNameInput.focus();
-        alert('Please enter a Project / File Name before downloading your .v5python project.');
+        alert('Please enter a Project Name before downloading your .v5python project.');
         return;
       }
 
-      const safeBaseName = rawName.replace(/\.v5python$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5python`;
 
       const v5ProjectJson = generateV5PythonContainer(assembledPythonSource);
+      triggerFileDownload(v5ProjectJson, finalFileName);
+    };
 
-      const blob = new Blob([v5ProjectJson], { type: 'application/json' });
+    // Download .v5blocks Project File
+    downloadBlocksBtn.onclick = () => {
+      const rawName = projectNameInput.value.trim();
+
+      if (!rawName) {
+        nameInputCard.classList.add('border-red-500', 'bg-red-950/20');
+        projectNameInput.focus();
+        alert('Please enter a Project Name before downloading your .v5blocks project.');
+        return;
+      }
+
+      const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const finalFileName = `${safeBaseName}.v5blocks`;
+
+      const v5BlocksJson = generateV5BlocksContainer(rawBlocksWorkspaceXml, assembledPythonSource);
+      triggerFileDownload(v5BlocksJson, finalFileName);
+    };
+
+    function triggerFileDownload(jsonString, fileName) {
+      const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = finalFileName;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    };
+    }
   </script>
 </body>
 </html>
