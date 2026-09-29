@@ -98,7 +98,7 @@
             <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
               <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit brain port or 3-wire pin assignment are immediately rejected.</li>
               <li><strong class="text-amber-400">Literal Logic Execution:</strong> If a motor is commanded to start but never stopped, it will spin indefinitely in the generated code.</li>
-              <li><strong class="text-emerald-400">Dual VEXcode Containers:</strong> Export directly to native <code class="text-blue-300">.v5python</code> or <code class="text-emerald-300">.v5blocks</code> project files.</li>
+              <li><strong class="text-emerald-400">V5 Python & Blocks:</strong> Export directly to native <code class="text-blue-300">.v5python</code> or <code class="text-emerald-300">.v5blocks</code> project files[cite: 5, 7].</li>
             </ul>
           </div>
         </div>
@@ -272,7 +272,7 @@
         </div>
         <p class="text-sm font-medium text-slate-300">Ready for Hardware Verification</p>
         <p class="text-xs max-w-sm text-slate-500 leading-relaxed">
-          Hold pseudocode steady up to your camera for auto-capture, or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python & Blocks project files.
+          Hold pseudocode steady up to your camera for auto-capture, or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python & Blocks project files[cite: 5, 7].
         </p>
       </div>
 
@@ -499,7 +499,7 @@
     let rawUserProjectCode = '';
     let rawBlocksWorkspaceXml = '';
     let assembledPythonSource = '';
-    let currentActiveView = 'python'; // 'python' or 'blocks'
+    let currentActiveView = 'python';
     let cameraStream = null;
     let currentFacingMode = 'user';
 
@@ -1002,29 +1002,59 @@
       }
     }
 
-    // ================= FALLBACK BLOCKLY XML BUILDER =================
-    // Builds a valid VEXcode V5 Blocks XML tree if model returns plain text
-    function buildFallbackBlocksXml(transcription, detectedHardware) {
-      const lines = (transcription || '')
+    // ================= BLOCKLY XML BUILDER (MATCHES VEXCODE V5) =================
+    function generateBlocklyId() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$*()_+-=';
+      let id = '';
+      for (let i = 0; i < 20; i++) {
+        id += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return id;
+    }
+
+    function escapeXml(str) {
+      return (str || '').replace(/[<>&'"]/g, c => {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case '\'': return '&apos;';
+          case '"': return '&quot;';
+        }
+      });
+    }
+
+    // Builds a valid VEXcode V5 Blocks XML tree rooted with v5_events_when_started
+    function buildGuaranteedV5BlocksXml(transcription) {
+      const rootId = generateBlocklyId();
+      const rawLines = (transcription || 'Pseudocode converted')
         .split('\n')
         .map(l => l.trim())
         .filter(l => l.length > 0 && !l.startsWith('//') && !l.startsWith('#'));
 
-      let innerBlocks = '';
-      let closingTags = '';
-
-      for (let i = 0; i < lines.length; i++) {
-        const cleanLine = lines[i].replace(/[<>&'"]/g, '');
-        innerBlocks += `<next><block type="comment"><field name="COMMENT">${cleanLine}</field>`;
-        closingTags += `</block></next>`;
+      if (rawLines.length === 0) {
+        rawLines.push('Autonomous Routine');
       }
 
-      return `<xml xmlns="http://www.w3.org/1999/xhtml">
-  <block type="when_started" id="when_started" x="25" y="25">
-    ${innerBlocks}
-    ${closingTags}
-  </block>
-</xml>`;
+      // Chain blocks recursively from last to first
+      let chainXml = '';
+      for (let i = rawLines.length - 1; i >= 0; i--) {
+        const line = rawLines[i];
+        const waitMatch = line.match(/wait\s+([\d\.]+)/i);
+        const blockId = generateBlocklyId();
+        const shadowId = generateBlocklyId();
+        
+        let blockContent = '';
+        if (waitMatch) {
+          const sec = parseFloat(waitMatch[1]) || 1;
+          blockContent = `<block type="v5_control_wait" id="${blockId}"><value name="DURATION"><shadow type="math_number" id="${shadowId}"><field name="NUM">${sec}</field></shadow></value><field name="UNITS">SECONDS</field>${chainXml ? `<next>${chainXml}</next>` : ''}</block>`;
+        } else {
+          blockContent = `<block type="v5_screen_print" id="${blockId}"><field name="andsetcursortonextrow_mutator">true</field><value name="DATA"><shadow type="text" id="${shadowId}"><field name="TEXT">${escapeXml(line)}</field></shadow></value>${chainXml ? `<next>${chainXml}</next>` : ''}</block>`;
+        }
+        chainXml = blockContent;
+      }
+
+      return `<xml xmlns="https://developers.google.com/blockly/xml"><block type="v5_events_when_started" id="${rootId}" deletable="false" x="70" y="110"><next>${chainXml}</next></block></xml>`;
     }
 
     // ================= CODE ASSEMBLY & VEX TEMPLATING =================
@@ -1162,12 +1192,11 @@ ${rawUserProjectCode || '# No user logic written'}
     }
 
     // Official VEXcode .v5blocks JSON container generator
-    function generateV5BlocksContainer(workspaceXml, pythonText) {
+    function generateV5BlocksContainer(workspaceXml) {
       return JSON.stringify({
         "mode": "Blocks",
         "hardwareTarget": "brain",
-        "textContent": pythonText || "",
-        "textLanguage": "python",
+        "workspace": workspaceXml,
         "robotConfig": [],
         "slot": 0,
         "platform": "V5",
@@ -1182,6 +1211,7 @@ ${rawUserProjectCode || '# No user logic written'}
           }
         ],
         "v5SoundsEnabled": false,
+        "downloadLanguage": "python",
         "aiVisionSettings": {
           "colors": [],
           "codes": [],
@@ -1190,8 +1220,7 @@ ${rawUserProjectCode || '# No user logic written'}
           "AIObjectModel": [],
           "aiModelDropDownValue": null
         },
-        "workspace": workspaceXml,
-        "blocklyWorkspace": workspaceXml
+        "virtualSkillsYear": "2023"
       }, null, 2);
     }
 
@@ -1225,7 +1254,7 @@ CRITICAL HARDWARE RULES:
      Immediately reject the code. Set "passedGatekeeper": false.
      List every single missing peripheral in "missingPeripherals".
      Provide a clear rejection reason in "rejectionReason".
-     Set "hardwareDeclarations" to "", "userProjectCode" to "", and "v5blocksXml" to "".
+     Set "hardwareDeclarations" to "", "userProjectCode" to "".
 
 2. LITERAL LOGIC PRESERVATION (DO NOT FIX BUGS):
    - If the pseudocode passes the gatekeeper, prepare real VEXcode V5 Python code.
@@ -1255,14 +1284,9 @@ CRITICAL HARDWARE RULES:
      For "Loop N times", use: for count in range(N):
      For "While ...", use standard python: while distance_sensor.object_distance(DistanceUnits.CM) > 20:
 
-4. VEXCODE V5 BLOCKS WORKSPACE GENERATION:
-   - Generate valid Blockly XML for VEXcode V5 inside "v5blocksXml".
-   - Root must be: <block type="when_started" id="when_started" x="25" y="25">
-   - Sequence statements inside <next> tags.
-   - Include standard blocks for waits, repeats, and comment/action blocks for robot commands:
-     * wait: <block type="control_wait"><value name="DURATION"><shadow type="math_number"><field name="NUM">0.5</field></shadow></value><field name="UNITS">SECONDS</field><next>...</next></block>
-     * repeat: <block type="control_repeat"><value name="TIMES"><shadow type="math_whole_number"><field name="NUM">3</field></shadow></value><statement name="SUBSTACK">...</statement><next>...</next></block>
-     * other actions/steps as comment blocks: <block type="comment"><field name="COMMENT">Spin motor_group forward</field><next>...</next></block>
+4. SEPARATION OF CONCERNS:
+   - "hardwareDeclarations": Put ONLY the Python object instantiations here.
+   - "userProjectCode": Put ONLY the converted sequential algorithmic logic here.
 
 OUTPUT FORMAT:
 Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose:
@@ -1279,8 +1303,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
   ],
   "rawTranscription": "Line-by-line transcription of the student paper...",
   "hardwareDeclarations": "led_a = DigitalOut(brain.three_wire_port.a)\\nmotor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)\\nmotor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)\\nmotor_group = MotorGroup(motor_1, motor_2)\\ndistance_sensor = Distance(Ports.PORT3)",
-  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()",
-  "v5blocksXml": "<xml xmlns=\\"http://www.w3.org/1999/xhtml\\"><block type=\\"when_started\\" id=\\"when_started\\" x=\\"25\\" y=\\"25\\"><next><block type=\\"comment\\"><field name=\\"COMMENT\\">Drive forward for distance</field></block></next></block></xml>"
+  "userProjectCode": "distance = 3\\nmotor_group.spin_for(FORWARD, distance, TURNS)\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.CM) > 20:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()"
 }
 `;
 
@@ -1371,13 +1394,10 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       } else {
         rawHardwareDeclarations = res.hardwareDeclarations || res.robotConfigCode || '';
         rawUserProjectCode = res.userProjectCode || res.vexPythonCode || '';
-        
-        // Use AI XML or build guaranteed fallback XML
-        rawBlocksWorkspaceXml = (res.v5blocksXml && res.v5blocksXml.includes('when_started'))
-          ? res.v5blocksXml
-          : buildFallbackBlocksXml(res.rawTranscription, res.detectedHardware);
-
         transcriptionOutput.textContent = res.rawTranscription || 'No transcription available.';
+
+        // Build guaranteed valid VEXcode V5 Blocks XML
+        rawBlocksWorkspaceXml = buildGuaranteedV5BlocksXml(res.rawTranscription);
 
         // Populate port mapping
         detectedPortsList.innerHTML = '';
@@ -1446,7 +1466,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5blocks`;
 
-      const v5BlocksJson = generateV5BlocksContainer(rawBlocksWorkspaceXml, assembledPythonSource);
+      const v5BlocksJson = generateV5BlocksContainer(rawBlocksWorkspaceXml);
       triggerFileDownload(v5BlocksJson, finalFileName);
     };
 
