@@ -98,13 +98,13 @@
             <ul class="text-xs text-slate-300 mt-2 space-y-1 list-disc list-inside">
               <li><strong class="text-red-400">Strict Port Declarations:</strong> Peripherals without an explicit brain port or 3-wire pin assignment are immediately rejected.</li>
               <li><strong class="text-amber-400">Literal Logic Execution:</strong> If a motor is commanded to start but never stopped, it will spin indefinitely in the generated code.</li>
-              <li><strong class="text-emerald-400">V5 Python & Blocks:</strong> Export directly to native <code class="text-blue-300">.v5python</code> or <code class="text-emerald-300">.v5blocks</code> project files[cite: 5, 7].</li>
+              <li><strong class="text-emerald-400">Dual V5 Containers:</strong> Direct export to native <code class="text-blue-300">.v5python</code> and <code class="text-emerald-300">.v5blocks</code> project files[cite: 5, 7].</li>
             </ul>
           </div>
         </div>
       </div>
 
-      <!-- Ingestion Card (File Upload + Webcam Viewfinder) -->
+      <!-- Ingestion Card (File Upload + Webcam Viewfinder + Required Metadata) -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
         
         <!-- Tab Selector: File Upload vs Camera -->
@@ -123,27 +123,27 @@
         <!-- SECTION A: Drag & Drop Dropzone -->
         <div id="uploadModeContainer" class="space-y-3">
           <div id="dropzone" 
-               class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 flex flex-col items-center justify-center min-h-[220px]">
+               class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/50 flex flex-col items-center justify-center min-h-[200px]">
             
             <input type="file" id="fileInput" accept="image/*,application/pdf" class="hidden">
             
             <div id="dropzonePrompt" class="space-y-3 flex flex-col items-center">
-              <div class="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
               </div>
               <div>
                 <p class="text-sm font-medium text-slate-200">Click to upload or drag & drop</p>
-                <p class="text-xs text-slate-500 mt-1">Photos, JPG, PNG, or PDF</p>
+                <p class="text-xs text-slate-500 mt-0.5">Photos, JPG, PNG, or PDF</p>
               </div>
               <span class="inline-block text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-mono">Auto-scaled for OCR</span>
             </div>
 
             <!-- Preview Container -->
             <div id="previewContainer" class="hidden w-full space-y-3">
-              <div class="relative w-full max-h-60 rounded-lg overflow-hidden bg-black/40 border border-slate-700">
-                <img id="imagePreview" src="" alt="Pseudocode preview" class="w-full h-full object-contain max-h-56">
+              <div class="relative w-full max-h-56 rounded-lg overflow-hidden bg-black/40 border border-slate-700">
+                <img id="imagePreview" src="" alt="Pseudocode preview" class="w-full h-full object-contain max-h-52">
               </div>
               <div class="flex items-center justify-between text-xs px-1">
                 <span id="fileNameDisplay" class="font-mono text-slate-400 truncate max-w-[200px]">file.jpg</span>
@@ -169,14 +169,14 @@
             </label>
           </div>
 
-          <div class="relative rounded-xl overflow-hidden bg-black border-2 border-slate-700 min-h-[260px] flex items-center justify-center">
+          <div class="relative rounded-xl overflow-hidden bg-black border-2 border-slate-700 min-h-[240px] flex items-center justify-center">
             
             <!-- Live Video Element -->
             <video id="webcamVideo" 
                    autoplay 
                    playsinline 
                    muted 
-                   class="w-full h-auto min-h-[260px] max-h-[340px] bg-black object-contain"></video>
+                   class="w-full h-auto min-h-[240px] max-h-[320px] bg-black object-contain"></video>
 
             <!-- Shutter Flash Overlay -->
             <div id="shutterFlash" class="absolute inset-0 bg-white pointer-events-none opacity-0"></div>
@@ -184,7 +184,6 @@
             <!-- Intelligent Guide Target Box Overlay -->
             <div id="targetBox" class="absolute inset-4 border-2 border-dashed border-amber-400/70 rounded-lg pointer-events-none flex flex-col items-center justify-between p-3 transition-colors duration-200">
               
-              <!-- Target Corner Accents -->
               <div class="w-full flex justify-between">
                 <span class="w-3 h-3 border-t-2 border-l-2 border-inherit"></span>
                 <span class="w-3 h-3 border-t-2 border-r-2 border-inherit"></span>
@@ -226,26 +225,54 @@
           <div class="flex gap-2">
             <button id="snapPhotoBtn" 
                     type="button"
-                    class="flex-1 py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40">
+                    class="flex-1 py-2 px-4 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-950/40">
               <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
               <span>Manual Snap</span>
             </button>
             <button id="cancelCameraBtn" 
                     type="button"
-                    class="px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
               Cancel
             </button>
           </div>
         </div>
 
-        <!-- Submit Button -->
+        <!-- ================= UPFRONT REQUIRED METADATA CARD ================= -->
+        <div id="metadataInputCard" class="bg-slate-950/80 border border-slate-800 rounded-xl p-3.5 space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider mb-1 text-slate-300 flex items-center justify-between">
+              <span>Project / File Name <span class="text-red-400">*</span></span>
+              <span class="text-[10px] text-slate-500 font-normal">Required</span>
+            </label>
+            <div class="relative flex items-center">
+              <input type="text" 
+                     id="projectNameInput" 
+                     placeholder="e.g. Autonomous_Challenge_1" 
+                     class="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none transition pr-36">
+              <span class="absolute right-3 text-[10px] font-mono text-emerald-400 pointer-events-none font-bold">.v5python / .v5blocks</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider mb-1 text-slate-300 flex items-center justify-between">
+              <span>Author / Student Name <span class="text-red-400">*</span></span>
+              <span class="text-[10px] text-slate-500 font-normal">Required</span>
+            </label>
+            <input type="text" 
+                   id="authorNameInput" 
+                   placeholder="e.g. Ty Vernon / Period 3" 
+                   class="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none transition">
+          </div>
+        </div>
+
+        <!-- GATED CONVERT TRIGGER BUTTON -->
         <button id="convertBtn" 
                 disabled
                 class="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-900/30">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
           </svg>
-          <span id="convertBtnText">Validate Hardware & Convert</span>
+          <span id="convertBtnText">Upload/Snap Pseudocode First</span>
         </button>
 
         <!-- Dynamic Model & Status Feedback -->
@@ -272,7 +299,7 @@
         </div>
         <p class="text-sm font-medium text-slate-300">Ready for Hardware Verification</p>
         <p class="text-xs max-w-sm text-slate-500 leading-relaxed">
-          Hold pseudocode steady up to your camera for auto-capture, or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python & Blocks project files[cite: 5, 7].
+          Fill in your project and author name, then hold pseudocode steady up to your camera or upload a file. The engine will inspect port bindings and generate direct VEXcode V5 Python & Blocks project files[cite: 5, 7].
         </p>
       </div>
 
@@ -309,34 +336,6 @@
 
       <!-- SUCCESS CARD: Passed Gatekeeper & Generated Code -->
       <div id="successCard" class="hidden space-y-6">
-        
-        <!-- REQUIRED PROJECT FILE NAMING SECTION -->
-        <div id="nameInputCard" class="bg-slate-900 border border-slate-800 rounded-xl p-4 transition-all">
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex-1 w-full">
-              <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-300 flex items-center gap-1.5">
-                <span>Output Project Name</span>
-                <span class="text-red-400 font-bold">* (Required to Download)</span>
-              </label>
-              <div class="relative flex items-center">
-                <input type="text" 
-                       id="projectNameInput" 
-                       placeholder="e.g. Autonomous_Challenge_1" 
-                       class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none transition pr-36">
-                <span class="absolute right-3 text-[11px] font-mono text-emerald-400 pointer-events-none font-bold">.v5python / .v5blocks</span>
-              </div>
-              <p id="fileNameHelp" class="text-[11px] text-slate-500 mt-1">Naming your project formats both your Python and Blocks export files.</p>
-            </div>
-
-            <div class="w-full sm:w-48 flex-shrink-0">
-              <label class="block text-xs font-bold uppercase tracking-wider mb-1 text-slate-400">Author / Student</label>
-              <input type="text" 
-                     id="authorNameInput" 
-                     placeholder="Student Name" 
-                     class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none transition">
-            </div>
-          </div>
-        </div>
 
         <!-- Hardware Inspection Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -541,7 +540,12 @@
     const statusBox = document.getElementById('statusBox');
     const statusMessage = document.getElementById('statusMessage');
 
-    // Naming & Results DOM Elements
+    // Required Metadata Inputs
+    const metadataInputCard = document.getElementById('metadataInputCard');
+    const projectNameInput = document.getElementById('projectNameInput');
+    const authorNameInput = document.getElementById('authorNameInput');
+
+    // Output & Diagnostic DOM Elements
     const emptyState = document.getElementById('emptyState');
     const rejectionCard = document.getElementById('rejectionCard');
     const rejectionSummary = document.getElementById('rejectionSummary');
@@ -559,10 +563,6 @@
     const copyBtnText = document.getElementById('copyBtnText');
     const downloadCodeBtn = document.getElementById('downloadCodeBtn');
     const downloadBlocksBtn = document.getElementById('downloadBlocksBtn');
-
-    const nameInputCard = document.getElementById('nameInputCard');
-    const projectNameInput = document.getElementById('projectNameInput');
-    const authorNameInput = document.getElementById('authorNameInput');
     const editorFileNameDisplay = document.getElementById('editorFileNameDisplay');
 
     // DOM Elements - API Key Modal
@@ -636,6 +636,36 @@
         autoSnapStatusLabel.className = 'text-[11px] text-slate-500 font-semibold';
         resetAutoSnapVisuals();
       }
+    };
+
+    // ================= UPFRONT FORM VALIDATION & BUTTON GATING =================
+    function checkCanConvert() {
+      const hasImage = !!selectedImageBase64;
+      const hasProjectName = !!projectNameInput.value.trim();
+      const hasAuthor = !!authorNameInput.value.trim();
+
+      const isReady = hasImage && hasProjectName && hasAuthor;
+      convertBtn.disabled = !isReady;
+
+      if (!hasImage) {
+        convertBtnText.textContent = 'Upload or Snap Pseudocode First';
+      } else if (!hasProjectName) {
+        convertBtnText.textContent = 'Enter Project Name Above';
+      } else if (!hasAuthor) {
+        convertBtnText.textContent = 'Enter Author Name Above';
+      } else {
+        convertBtnText.textContent = 'Validate Hardware & Convert';
+      }
+    }
+
+    projectNameInput.oninput = () => {
+      checkCanConvert();
+      if (assembledPythonSource) rebuildPythonSource();
+    };
+
+    authorNameInput.oninput = () => {
+      checkCanConvert();
+      if (assembledPythonSource) rebuildPythonSource();
     };
 
     // ================= WEBCAM & AUTO-SNAP ENGINE =================
@@ -899,7 +929,7 @@
       fileInput.value = '';
       previewContainer.classList.add('hidden');
       dropzonePrompt.classList.remove('hidden');
-      convertBtn.disabled = true;
+      checkCanConvert();
     }
 
     function handleFile(file) {
@@ -949,7 +979,7 @@
       imagePreview.src = optimizedDataUrl;
       dropzonePrompt.classList.add('hidden');
       previewContainer.classList.remove('hidden');
-      convertBtn.disabled = false;
+      checkCanConvert();
     }
 
     // ================= DYNAMIC GEMINI MODEL DISCOVERY =================
@@ -998,8 +1028,7 @@
         convertBtnText.textContent = 'Analyzing...';
       } else {
         statusBox.classList.add('hidden');
-        convertBtn.disabled = false;
-        convertBtnText.textContent = 'Validate Hardware & Convert';
+        checkCanConvert();
       }
     }
 
@@ -1043,7 +1072,7 @@
         } else if (p.includes('led')) {
           const letterMatch = portStr.match(/[a-h]/i);
           const letter = letterMatch ? letterMatch[0].toUpperCase() : 'A';
-          const portNum = letter.charCodeAt(0) - 64; // A=1, B=2...
+          const portNum = letter.charCodeAt(0) - 64;
           config.push({
             port: [portNum],
             name: `LED${letter}`,
@@ -1163,15 +1192,6 @@ ${rawUserProjectCode || '# No user logic written'}
       updateViewerContent();
     };
 
-    projectNameInput.oninput = () => {
-      nameInputCard.classList.remove('border-red-500', 'bg-red-950/20');
-      rebuildPythonSource();
-    };
-
-    authorNameInput.oninput = () => {
-      rebuildPythonSource();
-    };
-
     // Official VEXcode .v5python JSON container generator
     function generateV5PythonContainer(pythonText) {
       return JSON.stringify({
@@ -1245,6 +1265,14 @@ ${rawUserProjectCode || '# No user logic written'}
         return;
       }
 
+      const rawProj = projectNameInput.value.trim();
+      const rawAuthor = authorNameInput.value.trim();
+
+      if (!rawProj || !rawAuthor) {
+        alert('Please enter both the Project Name and Author Name before running the converter.');
+        return;
+      }
+
       if (!selectedImageBase64) return;
 
       emptyState.classList.add('hidden');
@@ -1257,6 +1285,8 @@ ${rawUserProjectCode || '# No user logic written'}
 
         const promptText = `
 You are the strict Hardware Validator and VEXcode V5 Python and Blocks Generator for high school robotics students.
+Project Name: "${rawProj}"
+Author: "${rawAuthor}"
 Analyze the handwritten or printed pseudocode image provided.
 
 CRITICAL HARDWARE RULES:
@@ -1306,50 +1336,8 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
   "rawTranscription": "Line-by-line transcription of the student paper...",
   "hardwareDeclarations": "led_a = DigitalOut(brain.three_wire_port.a)\\nmotor_1 = Motor(Ports.PORT1, GearSetting.RATIO_18_1, False)\\nmotor_2 = Motor(Ports.PORT2, GearSetting.RATIO_18_1, True)\\nmotor_group = MotorGroup(motor_1, motor_2)\\ndistance_sensor = Distance(Ports.PORT3)",
   "userProjectCode": "distance1 = 300\\nmotor_group.spin_for(FORWARD, distance1, MM)\\nmotor_group.stop()\\n\\nfor count in range(3):\\n    led_a.set(True)\\n    wait(0.5, SECONDS)\\n    led_a.set(False)\\n    wait(0.5, SECONDS)\\n\\nwhile distance_sensor.object_distance(DistanceUnits.MM) > 200:\\n    motor_group.spin(FORWARD)\\n\\nmotor_group.stop()",
-  "robotConfig": [
-    {
-      "port": [1, 2, null],
-      "name": "Drivetrain",
-      "customName": false,
-      "deviceType": "Drivetrain",
-      "deviceClass": "smartdrive",
-      "setting": {
-        "type": "2-motor",
-        "wheelSize": "wheel4in",
-        "gear": "ratio18_1",
-        "gearRatio": "1:1",
-        "direction": "fwd",
-        "gyroType": "none",
-        "width": "295",
-        "unit": "mm",
-        "wheelbase": "40",
-        "wheelbaseUnit": "mm",
-        "xOffset": "0",
-        "xOffsetUnit": "mm",
-        "yOffset": "0",
-        "yOffsetUnit": "mm",
-        "thetaOffset": "180"
-      }
-    },
-    {
-      "port": [1],
-      "name": "LEDA",
-      "customName": false,
-      "deviceType": "LED",
-      "deviceClass": "led",
-      "setting": {},
-      "triportSourcePort": 22
-    },
-    {
-      "port": [3],
-      "name": "Distance3",
-      "customName": false,
-      "deviceType": "Distance",
-      "deviceClass": "distance",
-      "setting": {}
-    }
-  ],
-  "v5blocksXml": "<xml xmlns=\\"https://developers.google.com/blockly/xml\\"><variables><variable id=\\"v_dist\\">distance1</variable></variables><block type=\\"v5_events_when_started\\" id=\\"start\\" deletable=\\"false\\" x=\\"70\\" y=\\"110\\"><next><block type=\\"v5_variables_set_variable\\" id=\\"b1\\"><field name=\\"VARIABLE\\" id=\\"v_dist\\">distance1</field><value name=\\"VALUE\\"><shadow type=\\"math_number_string\\" id=\\"s1\\"><field name=\\"NUM\\">300</field></shadow></value><next><block type=\\"v5_drivetrain_drive_for\\" id=\\"b2\\"><field name=\\"DIRECTION\\">fwd</field><field name=\\"UNITS\\">mm</field><field name=\\"anddontwait_mutator\\">false</field><value name=\\"AMOUNT\\"><shadow type=\\"math_number\\" id=\\"s2\\"><field name=\\"NUM\\">200</field></shadow><block type=\\"v5_variables_variable\\" id=\\"v1\\"><field name=\\"VARIABLE\\" id=\\"v_dist\\">distance1</field></block></value><next><block type=\\"v5_motion_stop_driving\\" id=\\"b3\\"><next><block type=\\"v5_control_repeat\\" id=\\"b4\\"><value name=\\"TIMES\\"><shadow type=\\"math_whole_number\\" id=\\"s3\\"><field name=\\"NUM\\">3</field></shadow></value><statement name=\\"SUBSTACK\\"><block type=\\"v5_looks_set_led\\" id=\\"b5\\"><field name=\\"LED\\">LEDA</field><field name=\\"STATE\\">on</field><next><block type=\\"v5_control_wait\\" id=\\"b6\\"><value name=\\"DURATION\\"><shadow type=\\"math_positive_number\\" id=\\"s4\\"><field name=\\"NUM\\">0.5</field></shadow></value><next><block type=\\"v5_looks_set_led\\" id=\\"b7\\"><field name=\\"LED\\">LEDA</field><field name=\\"STATE\\">off</field><next><block type=\\"v5_control_wait\\" id=\\"b8\\"><value name=\\"DURATION\\"><shadow type=\\"math_positive_number\\" id=\\"s5\\"><field name=\\"NUM\\">0.5</field></shadow></value></block></next></block></next></block></next></block></statement><next><block type=\\"v5_control_while\\" id=\\"b9\\"><value name=\\"CONDITION\\"><block type=\\"v5_operator_comparison\\" id=\\"b10\\"><field name=\\"COMPARISON\\">&gt;</field><value name=\\"NUM1\\"><shadow type=\\"math_number_string\\" id=\\"s6\\"><field name=\\"NUM\\">0</field></shadow><block type=\\"v5_sensing_distance_object_distance\\" id=\\"b11\\"><field name=\\"DISTANCE\\">Distance3</field><field name=\\"UNITS\\">mm</field></block></value><value name=\\"NUM2\\"><shadow type=\\"math_number_string\\" id=\\"s7\\"><field name=\\"NUM\\">200</field></shadow></value></block></value><statement name=\\"SUBSTACK\\"><block type=\\"v5_drivetrain_drive\\" id=\\"b12\\"><field name=\\"DIRECTION\\">fwd</field></block></statement><next><block type=\\"v5_motion_stop_driving\\" id=\\"b13\\"></block></next></block></next></block></next></block></next></block></next></block></next></block></xml>"
+  "robotConfig": [],
+  "v5blocksXml": "<xml xmlns=\\"https://developers.google.com/blockly/xml\\">...</xml>"
 }
 `;
 
@@ -1452,7 +1440,6 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
         if (res.v5blocksXml && res.v5blocksXml.includes('v5_events_when_started')) {
           rawBlocksWorkspaceXml = res.v5blocksXml;
         } else {
-          // Guaranteed fallback structure matching the AST
           rawBlocksWorkspaceXml = `<xml xmlns="[https://developers.google.com/blockly/xml](https://developers.google.com/blockly/xml)"><block type="v5_events_when_started" id="start" deletable="false" x="70" y="110"><next><block type="v5_drivetrain_drive_for" id="d1"><field name="DIRECTION">fwd</field><field name="UNITS">mm</field><field name="anddontwait_mutator">false</field><value name="AMOUNT"><shadow type="math_number" id="s1"><field name="NUM">200</field></shadow></value><next><block type="v5_motion_stop_driving" id="s2"></block></next></block></next></block></xml>`;
         }
 
@@ -1495,15 +1482,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
 
     // Download .v5python Project File
     downloadCodeBtn.onclick = () => {
-      const rawName = projectNameInput.value.trim();
-
-      if (!rawName) {
-        nameInputCard.classList.add('border-red-500', 'bg-red-950/20');
-        projectNameInput.focus();
-        alert('Please enter a Project Name before downloading your .v5python project.');
-        return;
-      }
-
+      const rawName = projectNameInput.value.trim() || 'VEXcode_Project';
       const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5python`;
 
@@ -1513,15 +1492,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
 
     // Download .v5blocks Project File
     downloadBlocksBtn.onclick = () => {
-      const rawName = projectNameInput.value.trim();
-
-      if (!rawName) {
-        nameInputCard.classList.add('border-red-500', 'bg-red-950/20');
-        projectNameInput.focus();
-        alert('Please enter a Project Name before downloading your .v5blocks project.');
-        return;
-      }
-
+      const rawName = projectNameInput.value.trim() || 'VEXcode_Project';
       const safeBaseName = rawName.replace(/\.(v5python|v5blocks)$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
       const finalFileName = `${safeBaseName}.v5blocks`;
 
@@ -1540,6 +1511,9 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
+
+    // Initial check on load
+    checkCanConvert();
   </script>
 </body>
 </html>
