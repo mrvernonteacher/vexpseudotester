@@ -57,14 +57,10 @@
 
       <!-- Action Utilities -->
       <div class="flex items-center gap-2">
-        <button id="apiKeyBtn" 
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
-          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-          </svg>
-          <span id="apiKeyBtnLabel">API Key</span>
-          <span id="apiKeyStatusDot" class="w-2 h-2 rounded-full bg-red-500"></span>
-        </button>
+        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/70 border border-emerald-700/60 text-emerald-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Cloud Proxy Connected</span>
+        </span>
 
         <button id="helpModalBtn" 
                 title="Hardware & Gatekeeper Criteria"
@@ -272,7 +268,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
           </svg>
-          <span id="convertBtnText">Upload/Snap Pseudocode First</span>
+          <span id="convertBtnText">Upload or Snap Pseudocode First</span>
         </button>
 
         <!-- Dynamic Model & Status Feedback -->
@@ -437,53 +433,36 @@
 
   </main>
 
-  <!-- ================= API KEY & HELP MODAL ================= -->
-  <div id="apiKeyModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+  <!-- ================= INSTRUCTIONS & HELP MODAL ================= -->
+  <div id="helpModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white text-base flex items-center gap-2">
-          <span>Gemini API Access</span>
-        </h3>
-        <button id="closeModalBtn" class="text-slate-400 hover:text-white text-lg">&times;</button>
+        <h3 class="font-bold text-white text-base">Hardware Gatekeeper Instructions</h3>
+        <button id="closeHelpModalBtn" class="text-slate-400 hover:text-white text-lg">&times;</button>
       </div>
 
-      <div class="space-y-4 text-xs text-slate-300">
+      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
         <p>
-          This engine analyzes pseudocode using Google's Multimodal Gemini models. Your key is stored securely in your browser's <code class="text-blue-400">localStorage</code>.
+          This engineering converter prepares your autonomous routine for real VEX V5 hardware execution.
         </p>
 
-        <div>
-          <label class="block text-slate-400 uppercase tracking-wider font-semibold mb-1 text-[11px]">Your Gemini API Key</label>
-          <div class="relative">
-            <input type="password" 
-                   id="apiKeyInput" 
-                   placeholder="AIzaSy..." 
-                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white pr-20 focus:outline-none focus:border-blue-500 font-mono">
-            <button id="toggleKeyVisibility" class="absolute right-2 top-2 text-slate-400 hover:text-white text-[11px] font-semibold">
-              Show
-            </button>
-          </div>
+        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5">
+          <p class="font-semibold text-white">How to pass validation:</p>
+          <ul class="list-disc list-inside space-y-1 text-slate-400">
+            <li>Write physical port numbers next to all motors (e.g., <code class="text-blue-300">motor ports 1+2</code>).</li>
+            <li>Write 3-wire letters next to LEDs (e.g., <code class="text-blue-300">LED pin A</code>).</li>
+            <li>Write port numbers next to distance sensors (e.g., <code class="text-blue-300">distance port 3</code>).</li>
+          </ul>
         </div>
 
-        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
-          <p class="font-semibold text-slate-200">How to get a key:</p>
-          <ol class="list-decimal list-inside space-y-1 text-slate-400">
-            <li>Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 underline hover:text-blue-300 font-medium">Google AI Studio</a>.</li>
-            <li>Sign in with your Google account.</li>
-            <li>Click <strong>Create API Key</strong> and paste it above.</li>
-          </ol>
-          <p class="text-[11px] text-amber-400/90 pt-1">
-            Tip: Standard personal Google accounts work immediately without school district IT firewall restrictions.
-          </p>
-        </div>
+        <p class="text-slate-400">
+          All processing runs through Walton's secure Cloudflare edge proxy. No personal accounts or keys required.
+        </p>
       </div>
 
-      <div class="flex gap-2 justify-end pt-2">
-        <button id="clearKeyBtn" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-red-300">
-          Clear Key
-        </button>
-        <button id="saveKeyBtn" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white">
-          Save & Close
+      <div class="flex justify-end pt-2">
+        <button id="okHelpModalBtn" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white">
+          Got It
         </button>
       </div>
     </div>
@@ -491,6 +470,9 @@
 
   <!-- ================= JAVASCRIPT LOGIC ================= -->
   <script>
+    // SECURE CLOUDFLARE WORKER PROXY URL
+    const WORKER_PROXY_URL = 'https://vex-gemini-proxy.mrvernonteacher.workers.dev/';
+
     // State variables
     let selectedImageBase64 = null;
     let selectedImageMime = 'image/jpeg';
@@ -565,66 +547,15 @@
     const downloadBlocksBtn = document.getElementById('downloadBlocksBtn');
     const editorFileNameDisplay = document.getElementById('editorFileNameDisplay');
 
-    // DOM Elements - API Key Modal
-    const apiKeyBtn = document.getElementById('apiKeyBtn');
-    const apiKeyModal = document.getElementById('apiKeyModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
+    // Help Modal
+    const helpModal = document.getElementById('helpModal');
     const helpModalBtn = document.getElementById('helpModalBtn');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const saveKeyBtn = document.getElementById('saveKeyBtn');
-    const clearKeyBtn = document.getElementById('clearKeyBtn');
-    const toggleKeyVisibility = document.getElementById('toggleKeyVisibility');
-    const apiKeyStatusDot = document.getElementById('apiKeyStatusDot');
+    const closeHelpModalBtn = document.getElementById('closeHelpModalBtn');
+    const okHelpModalBtn = document.getElementById('okHelpModalBtn');
 
-    // Storage Utilities
-    function getStoredApiKey() {
-      return localStorage.getItem('vex_gemini_api_key') || '';
-    }
-
-    function updateApiKeyIndicator() {
-      const key = getStoredApiKey();
-      apiKeyStatusDot.className = (key && key.trim().length > 10) 
-        ? 'w-2 h-2 rounded-full bg-emerald-400' 
-        : 'w-2 h-2 rounded-full bg-red-500';
-    }
-    updateApiKeyIndicator();
-
-    apiKeyBtn.onclick = () => {
-      apiKeyInput.value = getStoredApiKey();
-      apiKeyModal.classList.remove('hidden');
-    };
-    helpModalBtn.onclick = () => {
-      apiKeyInput.value = getStoredApiKey();
-      apiKeyModal.classList.remove('hidden');
-    };
-    closeModalBtn.onclick = () => apiKeyModal.classList.add('hidden');
-    
-    saveKeyBtn.onclick = () => {
-      const val = apiKeyInput.value.trim();
-      if (val) {
-        localStorage.setItem('vex_gemini_api_key', val);
-        localStorage.removeItem('vex_active_gemini_models_v2');
-      }
-      updateApiKeyIndicator();
-      apiKeyModal.classList.add('hidden');
-    };
-
-    clearKeyBtn.onclick = () => {
-      localStorage.removeItem('vex_gemini_api_key');
-      localStorage.removeItem('vex_active_gemini_models_v2');
-      apiKeyInput.value = '';
-      updateApiKeyIndicator();
-    };
-
-    toggleKeyVisibility.onclick = () => {
-      if (apiKeyInput.type === 'password') {
-        apiKeyInput.type = 'text';
-        toggleKeyVisibility.textContent = 'Hide';
-      } else {
-        apiKeyInput.type = 'password';
-        toggleKeyVisibility.textContent = 'Show';
-      }
-    };
+    helpModalBtn.onclick = () => helpModal.classList.remove('hidden');
+    closeHelpModalBtn.onclick = () => helpModal.classList.add('hidden');
+    okHelpModalBtn.onclick = () => helpModal.classList.add('hidden');
 
     // Auto-Snap Toggle
     autoSnapToggle.onchange = () => {
@@ -982,44 +913,6 @@
       checkCanConvert();
     }
 
-    // ================= DYNAMIC GEMINI MODEL DISCOVERY =================
-    async function getDynamicFlashModels(apiKey) {
-      const cacheKey = 'vex_active_gemini_models_v2';
-      const cached = localStorage.getItem(cacheKey);
-
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {
-          localStorage.removeItem(cacheKey);
-        }
-      }
-
-      try {
-        setStatus(true, 'Querying Google for active Gemini models...');
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (res.ok) {
-          const data = await res.json();
-          const eligible = (data.models || [])
-            .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-            .map(m => m.name.replace(/^models\//, ''))
-            .filter(name => name.includes('flash') && !name.includes('embedding') && !name.includes('imagen'));
-
-          eligible.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-
-          if (eligible.length > 0) {
-            localStorage.setItem(cacheKey, JSON.stringify(eligible));
-            return eligible;
-          }
-        }
-      } catch (err) {
-        console.warn('Dynamic model query failed; using fallback cascade:', err);
-      }
-
-      return ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash'];
-    }
-
     function setStatus(loading, message = '') {
       if (loading) {
         statusBox.classList.remove('hidden');
@@ -1257,14 +1150,8 @@ ${rawUserProjectCode || '# No user logic written'}
       }, null, 2);
     }
 
-    // ================= CONVERSION ENGINE =================
+    // ================= CONVERSION ENGINE VIA CLOUDFLARE PROXY =================
     convertBtn.onclick = async () => {
-      const apiKey = getStoredApiKey();
-      if (!apiKey) {
-        apiKeyModal.classList.remove('hidden');
-        return;
-      }
-
       const rawProj = projectNameInput.value.trim();
       const rawAuthor = authorNameInput.value.trim();
 
@@ -1280,8 +1167,8 @@ ${rawUserProjectCode || '# No user logic written'}
       successCard.classList.add('hidden');
 
       try {
-        setStatus(true, 'Connecting to Gemini...');
-        const models = await getDynamicFlashModels(apiKey);
+        setStatus(true, 'Connecting to Cloud Proxy...');
+        const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash'];
 
         const promptText = `
 You are the strict Hardware Validator and VEXcode V5 Python and Blocks Generator for high school robotics students.
@@ -1341,7 +1228,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
 }
 `;
 
-        const payload = {
+        const geminiPayload = {
           contents: [{
             parts: [
               { text: promptText },
@@ -1362,19 +1249,21 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
         let data;
 
         for (const model of models) {
-          setStatus(true, `Validating with ${model}...`);
+          setStatus(true, `Processing with ${model}...`);
           try {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            response = await fetch(apiUrl, {
+            response = await fetch(WORKER_PROXY_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              body: JSON.stringify({
+                model: model,
+                payload: geminiPayload
+              })
             });
 
             data = await response.json();
 
             if (response.status === 503 || response.status === 429 || response.status === 404) {
-              console.warn(`Model ${model} unavailable (HTTP ${response.status}). Trying next...`);
+              console.warn(`Model ${model} unavailable (HTTP ${response.status}). Trying fallback...`);
               continue;
             }
 
@@ -1385,12 +1274,11 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
         }
 
         if (!response || !response.ok) {
-          localStorage.removeItem('vex_active_gemini_models_v2');
-          throw new Error(data?.error?.message || `All Gemini models were unavailable (HTTP ${response?.status}).`);
+          throw new Error(data?.error?.message || `Proxy server request failed (HTTP ${response?.status}).`);
         }
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) throw new Error("No response received from the vision model.");
+        if (!rawText) throw new Error("No structured output returned from proxy.");
 
         let cleanJsonStr = rawText.trim();
         if (cleanJsonStr.startsWith('```')) {
@@ -1401,7 +1289,7 @@ Return ONLY valid JSON matching this schema with NO extra markdown wrap or prose
         try {
           result = JSON.parse(cleanJsonStr);
         } catch (e) {
-          throw new Error("Unable to parse structured verification response. Try retaking a sharper picture with even lighting.");
+          throw new Error("Unable to parse conversion response. Try snapping a clearer photo.");
         }
 
         renderResults(result);
